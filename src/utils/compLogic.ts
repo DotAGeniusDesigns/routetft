@@ -6,26 +6,6 @@ const compIdToName: Record<string, string> = Object.fromEntries(
   COMPONENT_ITEMS.map(c => [c.id, c.name])
 )
 
-// Returns all completed items buildable from a list of component names
-function buildableItems(components: string[]): string[] {
-  const built: string[] = []
-  for (const item of COMBINED_ITEMS) {
-    const [aId, bId] = item.composition
-    const a = compIdToName[aId] ?? aId
-    const b = compIdToName[bId] ?? bId
-    const copyComponents = [...components]
-    const idxA = copyComponents.indexOf(a)
-    if (idxA === -1) continue
-    copyComponents.splice(idxA, 1)
-    const idxB = copyComponents.indexOf(b)
-    if (idxB === -1) continue
-    built.push(item.name)
-  }
-  return built
-}
-
-
-
 export function scoreComp(
   comp: MetaComp,
   selection: UserSelection
