@@ -1,5 +1,26 @@
 import { MetaComp, UserSelection, CompRecommendation } from '../types/tft'
 import { COMBINED_ITEMS, COMPONENT_ITEMS } from '../data/tftItems'
+import {
+  AUGMENT_TIER_MATCH_POINTS,
+  ARTIFACT_TIER_MATCH_POINTS,
+  EARLY_GAME_MAX_BONUS,
+  EARLY_GAME_STAGE_MULTIPLIER,
+  EMBLEM_POINTS_PER_MATCH,
+  FULL_ITEM_SLOT_PROGRESS,
+  GOD_BOON_MATCH_BONUS,
+  ITEM_CORE_SLOT_WEIGHTS,
+  ITEM_FLEX_WEIGHT,
+  ITEM_ROLE_SLOT_MULTIPLIERS,
+  META_LETTER_TIER_FLAT_BONUS,
+  SCORING_WEIGHTS,
+  SUBSCORE_SCALE,
+  UNIT_MATCH_ROLE_WEIGHTS,
+} from '../config/scoring'
+import {
+  normalizeAugmentTiers,
+  normalizeArtifactTiers,
+  POWER_TIER_ORDER,
+} from './tieredMeta'
 
 // composition arrays use component IDs; selection.items uses component names — build a lookup
 const compIdToName: Record<string, string> = Object.fromEntries(
@@ -11,52 +32,101 @@ export function scoreComp(
   selection: UserSelection
 ): CompRecommendation {
   let score = 0
+  const carries = new Set(comp.carries ?? [])
+  const tank = comp.tank ?? ''
+  const coreSet = new Set(comp.coreUnits ?? [])
+  const flexSet = new Set(comp.flexUnits ?? [])
 
-  // --- Unit score (40%) ---
+  // --- Unit score ---
   const unitMatches = selection.units.filter(u =>
     comp.coreUnits.includes(u) || comp.flexUnits.includes(u)
   )
   const coreMatches = selection.units.filter(u => comp.coreUnits.includes(u))
-  const unitScore = (coreMatches.length / Math.max(comp.coreUnits.length, 1)) * 100
-  score += unitScore * 0.4
+  function unitRoleWeight(unit: string): number {
+    if (coreSet.has(unit) && carries.has(unit)) return UNIT_MATCH_ROLE_WEIGHTS.carryCore
+    if (coreSet.has(unit) && tank === unit) return UNIT_MATCH_ROLE_WEIGHTS.tankCore
+    if (coreSet.has(unit)) return UNIT_MATCH_ROLE_WEIGHTS.nonTaggedCore
+    if (flexSet.has(unit)) return UNIT_MATCH_ROLE_WEIGHTS.flexUnit
+    return 0
+  }
+  const targetUnitWeight = [...Array.from(coreSet), ...Array.from(flexSet)].reduce(
+    (sum, u) => sum + unitRoleWeight(u),
+    0
+  )
+  const matchedUnitWeight = selection.units.reduce((sum, u) => sum + unitRoleWeight(u), 0)
+  const unitScore =
+    (matchedUnitWeight / Math.max(targetUnitWeight, Number.EPSILON)) * SUBSCORE_SCALE
+  score += unitScore * SCORING_WEIGHTS.unit
 
-  // --- Early game bonus (up to +10 pts) ---
-  // Strong signal at stage 2, halved at stage 3, negligible at stage 4+
+  // --- Early game bonus ---
   const earlyMatches = selection.units.filter(u => comp.earlyGame.includes(u))
   const earlyRatio = earlyMatches.length / Math.max(comp.earlyGame.length, 1)
-  const earlyWeight = selection.stage <= 2 ? 1.0 : selection.stage === 3 ? 0.5 : 0.05
-  score += earlyRatio * 10 * earlyWeight
+  const earlyWeight =
+    selection.stage <= 2
+      ? EARLY_GAME_STAGE_MULTIPLIER.stage1to2
+      : selection.stage === 3
+        ? EARLY_GAME_STAGE_MULTIPLIER.stage3
+        : EARLY_GAME_STAGE_MULTIPLIER.stage4Plus
+  score += earlyRatio * EARLY_GAME_MAX_BONUS * earlyWeight
 
-  // --- Item score (45%) ---
-  // Uses a shared, depleting component pool so the same physical component can't be
-  // double-counted across multiple items. Process highest-weight slots first so
-  // priority items claim components before lower-weight ones do.
-  //
-  // Contribution per slot: weight * (components_claimed / 2)
-  //   0 components  → 0 credit
-  //   1 component   → half credit
-  //   2 components  → full credit
-  const ITEM_WEIGHTS = [2, 2, 1]
-
-  // Flatten all item slots into (itemName, weight) pairs, highest weight first
+  // --- Item score (depleting combined + component pools) ---
   type ItemSlot = { item: string; weight: number }
   const slots: ItemSlot[] = []
+  const roleSlotMultiplier = (
+    champion: string,
+    slotType: 'core' | 'flex'
+  ): number => {
+    const isCarry = carries.has(champion)
+    const isTank = tank === champion
+    if (isCarry && slotType === 'core') return ITEM_ROLE_SLOT_MULTIPLIERS.carryCore
+    if (isCarry && slotType === 'flex') return ITEM_ROLE_SLOT_MULTIPLIERS.carryFlex
+    if (isTank && slotType === 'core') return ITEM_ROLE_SLOT_MULTIPLIERS.tankCore
+    if (isTank && slotType === 'flex') return ITEM_ROLE_SLOT_MULTIPLIERS.tankFlex
+    if (slotType === 'core') return ITEM_ROLE_SLOT_MULTIPLIERS.otherCore
+    return ITEM_ROLE_SLOT_MULTIPLIERS.otherFlex
+  }
 
   const unitBuilds = comp.unitBuilds ?? []
   if (unitBuilds.length > 0) {
     unitBuilds.forEach(build => {
-      build.coreItems.forEach((item, idx) => slots.push({ item, weight: ITEM_WEIGHTS[idx] ?? 1 }))
-      build.flexItems.forEach(item => slots.push({ item, weight: 1 }))
+      build.coreItems.forEach((item, idx) =>
+        slots.push({
+          item,
+          weight:
+            (ITEM_CORE_SLOT_WEIGHTS[idx] ?? ITEM_FLEX_WEIGHT) *
+            roleSlotMultiplier(build.champion, 'core'),
+        })
+      )
+      build.flexItems.forEach(item =>
+        slots.push({
+          item,
+          weight: ITEM_FLEX_WEIGHT * roleSlotMultiplier(build.champion, 'flex'),
+        })
+      )
     })
   } else {
     comp.carryBuilds?.forEach(build => {
-      build.items.forEach((item, idx) => slots.push({ item, weight: ITEM_WEIGHTS[idx] ?? 1 }))
+      build.items.forEach((item, idx) =>
+        slots.push({
+          item,
+          weight:
+            (ITEM_CORE_SLOT_WEIGHTS[idx] ?? ITEM_FLEX_WEIGHT) *
+            ITEM_ROLE_SLOT_MULTIPLIERS.carryCore,
+        })
+      )
     })
   }
   slots.sort((a, b) => b.weight - a.weight)
 
-  // Single component pool — components are consumed as they're claimed
+  const combinedPool = [...(selection.combinedItems ?? [])]
   const pool = [...selection.items]
+
+  function takeBuiltItem(itemName: string): boolean {
+    const idx = combinedPool.indexOf(itemName)
+    if (idx === -1) return false
+    combinedPool.splice(idx, 1)
+    return true
+  }
 
   function claimComponents(itemName: string): number {
     const combined = COMBINED_ITEMS.find(i => i.name === itemName)
@@ -71,56 +141,72 @@ export function scoreComp(
     return claimed
   }
 
+  function slotProgress(itemName: string): number {
+    // Built-item precedence:
+    // 1) consume exact completed item first (from combinedItems)
+    // 2) only if missing, try to consume loose components
+    // This prevents double-crediting one slot from both representations while
+    // still allowing extra components to satisfy other item slots.
+    if (takeBuiltItem(itemName)) return FULL_ITEM_SLOT_PROGRESS
+    return claimComponents(itemName) / 2
+  }
+
   let weightedProgress = 0
   let totalItemWeight = 0
   slots.forEach(({ item, weight }) => {
     totalItemWeight += weight
-    weightedProgress += weight * (claimComponents(item) / 2)
+    weightedProgress += weight * slotProgress(item)
   })
 
-  const itemScore = (weightedProgress / Math.max(totalItemWeight, 1)) * 100
-  score += itemScore * 0.45
+  const itemScore = (weightedProgress / Math.max(totalItemWeight, 1)) * SUBSCORE_SCALE
+  score += itemScore * SCORING_WEIGHTS.item
 
-  // --- Augment / emblem bonus (up to +20 pts) ---
-  const recAugments = comp.recommendedAugments ?? []
+  // --- Tiered augment + artifact + emblem ---
+  const augmentTiers = normalizeAugmentTiers(comp)
+  const artifactTiers = normalizeArtifactTiers(comp)
   const recEmblems = comp.recommendedEmblems ?? []
-  const matchedAugments = selection.augments.filter(id => recAugments.includes(id))
+
+  function sumTierMatches(
+    tiers: typeof augmentTiers,
+    userIds: string[],
+    perTierPoints: Record<string, number>
+  ): number {
+    let pts = 0
+    for (const tier of POWER_TIER_ORDER) {
+      const bucket = tiers[tier] ?? []
+      const n = userIds.filter(id => bucket.includes(id)).length
+      pts += n * (perTierPoints[tier] ?? 0)
+    }
+    return pts
+  }
+
+  const augmentPts = sumTierMatches(
+    augmentTiers,
+    selection.augments,
+    AUGMENT_TIER_MATCH_POINTS
+  )
+  const artifactPts = sumTierMatches(
+    artifactTiers,
+    selection.artifacts,
+    ARTIFACT_TIER_MATCH_POINTS
+  )
+
   const matchedEmblems = selection.augments.filter(id =>
     recEmblems.some(e => id.toLowerCase().includes(e.toLowerCase().replace(/\s+/g, '_')))
   )
-  const augmentBonus = Math.min((matchedAugments.length + matchedEmblems.length) * 10, 20)
-  score += augmentBonus
+  const emblemPts = matchedEmblems.length * EMBLEM_POINTS_PER_MATCH
 
-  // --- God Boon bonus (+20 pts) ---
+  score += augmentPts + artifactPts + emblemPts
+
+  // --- God boon ---
   const recGodBoons = comp.recommendedGodBoons ?? []
-  const godBoonBonus = (selection.godBoon && recGodBoons.includes(selection.godBoon)) ? 20 : 0
+  const godBoonBonus =
+    selection.godBoon && recGodBoons.includes(selection.godBoon) ? GOD_BOON_MATCH_BONUS : 0
   score += godBoonBonus
 
-  // --- Tier bonus (15%) and stage/playstyle modifier ---
-  // Only apply if there's actual signal from unit/item/augment/boon matches.
-  const hasSignal = unitScore > 0 || weightedProgress > 0 || augmentBonus > 0 || godBoonBonus > 0
-
-  if (hasSignal) {
-    const tierBonus = comp.tier === 'S' ? 100 : comp.tier === 'A' ? 75 : 50
-    score += tierBonus * 0.15
-
-    if (selection.stage <= 2) {
-      if (comp.playstyle === '1cost-reroll') score += 15
-      else if (comp.playstyle === '2cost-reroll') score += 12
-      else if (comp.playstyle === '3cost-reroll') score += 5
-      else if (comp.playstyle === 'standard') score += 5
-      else if (comp.playstyle === 'fast9') score += 3
-    } else if (selection.stage === 3) {
-      if (comp.playstyle === '1cost-reroll') score += 8
-      else if (comp.playstyle === '2cost-reroll') score += 12
-      else if (comp.playstyle === '3cost-reroll') score += 12
-      else if (comp.playstyle === 'standard') score += 8
-      else if (comp.playstyle === 'fast9') score += 8
-    } else if (selection.stage === 4) {
-      if (comp.playstyle === 'standard') score += 5
-      else if (comp.playstyle === 'fast9') score += 8
-    }
-  }
+  // --- Meta letter tier ---
+  // Always apply as a small baseline quality adjustment.
+  score += META_LETTER_TIER_FLAT_BONUS[comp.tier]
 
   // --- Build path ---
   const buildPath: string[] = []

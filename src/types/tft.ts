@@ -32,6 +32,12 @@ export interface CarryBuild {
   components: string[]
 }
 
+/** Power curve for augments & artifacts on a meta comp (drag tiers in admin). */
+export type CompPowerTier = 'base' | 'good' | 'great' | 'op'
+
+/** Per-tier lists: augment IDs or artifact names, depending on context. */
+export type TieredIdBuckets = Record<CompPowerTier, string[]>
+
 export interface MetaComp {
   id: string
   name: string
@@ -47,15 +53,23 @@ export interface MetaComp {
   playstyle: '1cost-reroll' | '2cost-reroll' | '3cost-reroll' | 'standard' | 'fast9'
   description: string
   link?: string
-  recommendedAugments?: string[]  // augment IDs that are strong for this comp
+  /** Flat list — auto-synced from augmentTiers for older saves; scoring prefers augmentTiers. */
+  recommendedAugments?: string[]
+  /** Drag-tiered augment IDs (base → OP); overrides flat list when present. */
+  augmentTiers?: TieredIdBuckets
+  /** Drag-tiered artifact item names (from artifact pool). */
+  artifactTiers?: TieredIdBuckets
   recommendedEmblems?: string[]   // trait emblem names (e.g. "Dark Star Emblem")
   recommendedGodBoons?: string[]  // god augment IDs that work well for this comp
 }
 
 export interface UserSelection {
   items: string[]       // component item names the user has
+  /** Finished combined items (built items on bench/board), not components */
+  combinedItems: string[]
   units: string[]       // champion names the user holds
   augments: string[]    // augment IDs the user has
+  artifacts: string[]   // artifact item names the user has
   godBoon: string | null  // which Space God boon the player received
   stage: number
 }

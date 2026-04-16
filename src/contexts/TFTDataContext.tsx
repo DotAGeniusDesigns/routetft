@@ -2,13 +2,14 @@ import React, { createContext, useContext, ReactNode } from 'react'
 import { Champion, MetaComp, TFTItem, TFTAugment } from '../types/tft'
 import { CHAMPIONS } from '../data/set17Champions'
 import { META_COMPS } from '../data/metaComps'
-import { COMPONENT_ITEMS } from '../data/tftItems'
+import { COMPONENT_ITEMS, COMBINED_ITEMS } from '../data/tftItems'
 import { AUGMENTS } from '../data/augments'
 
 interface TFTDataContextType {
   champions: Champion[]
   comps: MetaComp[]
   componentItems: TFTItem[]
+  combinedItems: TFTItem[]
   augments: TFTAugment[]
 }
 
@@ -21,6 +22,7 @@ export function TFTDataProvider({ children }: { children: ReactNode }) {
         champions: CHAMPIONS,
         comps: META_COMPS,
         componentItems: COMPONENT_ITEMS,
+        combinedItems: COMBINED_ITEMS,
         augments: AUGMENTS,
       }}
     >

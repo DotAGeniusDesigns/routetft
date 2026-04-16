@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { TFTAugment, MetaComp } from '../types/tft'
 import { CHAMPIONS } from '../data/set17Champions'
-import { AUGMENTS } from '../data/augments'
 import { GOD_BOONS } from '../data/godBoons'
 import TeamBuilder from './admin/TeamBuilder'
+import TieredRecommendationsEditor from './admin/TieredRecommendationsEditor'
+import { migrateMetaCompDraft, flattenTierBuckets, emptyTierBuckets } from '../utils/tieredMeta'
 
 // ─── API helpers ─────────────────────────────────────────────────────────────
 
@@ -221,98 +222,6 @@ function AugmentsTab() {
   )
 }
 
-// ─── Augment Picker ──────────────────────────────────────────────────────────
-
-const TIER_COLORS_AUG: Record<string, string> = { Prismatic: '#b070e8', Gold: '#ffb938', Silver: '#94a3b8' }
-
-function AugmentPicker({ selectedAugments, onChange }: {
-  selectedAugments: string[]
-  onChange: (ids: string[]) => void
-}) {
-  const [search, setSearch] = useState('')
-  const [highlightIdx, setHighlightIdx] = useState(-1)
-  const dropdownRef = React.useRef<HTMLDivElement>(null)
-
-  const results = useMemo(() => {
-    if (!search.trim()) return []
-    return AUGMENTS.filter(a => a.name.toLowerCase().includes(search.toLowerCase())).slice(0, 20)
-  }, [search])
-
-  // Reset highlight when results change
-  React.useEffect(() => { setHighlightIdx(-1) }, [search])
-
-  // Scroll highlighted item into view
-  React.useEffect(() => {
-    if (highlightIdx >= 0 && dropdownRef.current) {
-      const el = dropdownRef.current.children[highlightIdx] as HTMLElement
-      el?.scrollIntoView({ block: 'nearest' })
-    }
-  }, [highlightIdx])
-
-  const add = (id: string) => {
-    onChange([...selectedAugments, id])
-    setSearch('')
-    setHighlightIdx(-1)
-  }
-
-  const removeAt = (idx: number) =>
-    onChange(selectedAugments.filter((_, i) => i !== idx))
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (results.length === 0) return
-    if (e.key === 'ArrowDown') {
-      e.preventDefault()
-      setHighlightIdx(i => Math.min(i + 1, results.length - 1))
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault()
-      setHighlightIdx(i => Math.max(i - 1, 0))
-    } else if (e.key === 'Enter' && highlightIdx >= 0) {
-      e.preventDefault()
-      add(results[highlightIdx].id)
-    } else if (e.key === 'Escape') {
-      setSearch('')
-    }
-  }
-
-  return (
-    <div className="p-4 rounded-lg border border-[#1e2240] bg-[#0d0f17] space-y-2">
-      <div className="text-[10px] font-semibold text-[#c89b3c] uppercase tracking-wider font-['Orbitron']">Recommended Augments</div>
-      {selectedAugments.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {selectedAugments.map((id, idx) => {
-            const a = AUGMENTS.find(x => x.id === id)
-            if (!a) return null
-            return (
-              <button key={idx} onClick={() => removeAt(idx)}
-                className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] border transition-all"
-                style={{ borderColor: `${TIER_COLORS_AUG[a.tier]}50`, backgroundColor: `${TIER_COLORS_AUG[a.tier]}15`, color: TIER_COLORS_AUG[a.tier] }}
-              >
-                {a.name} <span className="opacity-60">✕</span>
-              </button>
-            )
-          })}
-        </div>
-      )}
-      <div className="relative">
-        <Input value={search} onChange={setSearch} placeholder="Search augments…" className="w-full" onKeyDown={handleKeyDown} />
-        {results.length > 0 && (
-          <div ref={dropdownRef} className="absolute z-10 top-full left-0 right-0 mt-1 bg-[#13162a] border border-[#2d3154] rounded-lg overflow-hidden shadow-xl max-h-52 overflow-y-auto">
-            {results.map((a, i) => (
-              <button key={a.id} onClick={() => add(a.id)}
-                className="w-full text-left px-3 py-1.5 text-[11px] flex items-center gap-2 transition-colors"
-                style={{ backgroundColor: i === highlightIdx ? '#1e2240' : 'transparent', color: '#94a3b8' }}
-              >
-                <span className="text-[9px] font-bold" style={{ color: TIER_COLORS_AUG[a.tier] }}>{a.tier[0]}</span>
-                {a.name}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
 // ─── Emblem Picker ────────────────────────────────────────────────────────────
 
 const TRAITS = [
@@ -451,7 +360,9 @@ function MetaCompsTab() {
     if (res.ok) {
       setComps(res.data)
       const d: Record<string, MetaComp> = {}
-      res.data.forEach((c: MetaComp) => { d[c.id] = JSON.parse(JSON.stringify(c)) })
+      res.data.forEach((c: MetaComp) => {
+        d[c.id] = migrateMetaCompDraft(JSON.parse(JSON.stringify(c)))
+      })
       setDrafts(d)
       setActiveId(prev => prev ?? (res.data.length > 0 ? res.data[0].id : null))
     }
@@ -499,6 +410,8 @@ function MetaCompsTab() {
       description: '',
       recommendedGodBoons: [],
       recommendedAugments: [],
+      augmentTiers: emptyTierBuckets(),
+      artifactTiers: emptyTierBuckets(),
       recommendedEmblems: [],
     }
     await apiFetch('/comps', { method: 'POST', body: JSON.stringify(blank) })
@@ -628,9 +541,25 @@ function MetaCompsTab() {
               onChange={ids => updateDraft(activeDraft.id, { recommendedGodBoons: ids })}
             />
 
-            <AugmentPicker
-              selectedAugments={activeDraft.recommendedAugments ?? []}
-              onChange={ids => updateDraft(activeDraft.id, { recommendedAugments: ids })}
+            <TieredRecommendationsEditor
+              title="Augments — drag tiers"
+              mode="augment"
+              resetKey={activeDraft.id}
+              tiers={activeDraft.augmentTiers ?? emptyTierBuckets()}
+              onChange={next =>
+                updateDraft(activeDraft.id, {
+                  augmentTiers: next,
+                  recommendedAugments: flattenTierBuckets(next),
+                })
+              }
+            />
+
+            <TieredRecommendationsEditor
+              title="Artifacts — drag tiers"
+              mode="artifact"
+              resetKey={activeDraft.id}
+              tiers={activeDraft.artifactTiers ?? emptyTierBuckets()}
+              onChange={next => updateDraft(activeDraft.id, { artifactTiers: next })}
             />
 
             <EmblemPicker

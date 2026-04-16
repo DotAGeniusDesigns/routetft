@@ -6,16 +6,19 @@ import { getRecommendations } from './utils/compLogic'
 import UnitPanel from './components/UnitPanel'
 import ItemPanel from './components/ItemPanel'
 import AugmentPanel from './components/AugmentPanel'
+import ArtifactPanel from './components/ArtifactPanel'
 import GodBoonPanel from './components/GodBoonPanel'
 import CompRecommendations from './components/CompRecommendations'
 
 function AppContent() {
-  const { champions, comps, componentItems, augments } = useTFTData()
+  const { champions, comps, componentItems, combinedItems, augments } = useTFTData()
 
   const [selection, setSelection] = useState<UserSelection>({
     items: [],
+    combinedItems: [],
     units: [],
     augments: [],
+    artifacts: [],
     godBoon: null,
     stage: 2,
   })
@@ -48,6 +51,20 @@ function AppContent() {
     }
   }
 
+  const toggleCombinedItem = (name: string) => {
+    if (name.startsWith('__remove__')) {
+      const itemName = name.replace('__remove__', '')
+      setSelection(prev => {
+        const idx = [...prev.combinedItems].lastIndexOf(itemName)
+        const next = [...prev.combinedItems]
+        next.splice(idx, 1)
+        return { ...prev, combinedItems: next }
+      })
+    } else {
+      setSelection(prev => ({ ...prev, combinedItems: [...prev.combinedItems, name] }))
+    }
+  }
+
   const toggleAugment = (id: string) => {
     setSelection(prev => ({
       ...prev,
@@ -57,13 +74,36 @@ function AppContent() {
     }))
   }
 
+  const toggleArtifact = (name: string) => {
+    setSelection(prev => ({
+      ...prev,
+      artifacts: prev.artifacts.includes(name)
+        ? prev.artifacts.filter(a => a !== name)
+        : [...prev.artifacts, name],
+    }))
+  }
+
   const setGodBoon = (id: string | null) =>
     setSelection(prev => ({ ...prev, godBoon: id }))
 
   const clearAll = () =>
-    setSelection({ items: [], units: [], augments: [], godBoon: null, stage: selection.stage })
+    setSelection({
+      items: [],
+      combinedItems: [],
+      units: [],
+      augments: [],
+      artifacts: [],
+      godBoon: null,
+      stage: selection.stage,
+    })
 
-  const totalSelected = selection.items.length + selection.units.length + selection.augments.length + (selection.godBoon ? 1 : 0)
+  const totalSelected =
+    selection.items.length +
+    selection.combinedItems.length +
+    selection.units.length +
+    selection.augments.length +
+    selection.artifacts.length +
+    (selection.godBoon ? 1 : 0)
 
   return (
     <div className="min-h-screen bg-[#0d0f17] flex flex-col">
@@ -123,11 +163,18 @@ function AppContent() {
             selectedAugments={selection.augments}
             onToggle={toggleAugment}
           />
+          <ArtifactPanel
+            selectedArtifacts={selection.artifacts}
+            onToggle={toggleArtifact}
+          />
           <div className="flex-1 overflow-hidden flex flex-col min-h-0">
             <ItemPanel
               items={componentItems}
               selectedItems={selection.items}
               onToggle={toggleItem}
+              combinedCatalog={combinedItems}
+              selectedCombined={selection.combinedItems}
+              onToggleCombined={toggleCombinedItem}
             />
           </div>
         </div>

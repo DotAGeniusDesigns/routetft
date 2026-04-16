@@ -1,14 +1,17 @@
 import React, { useState } from 'react'
-import { CompRecommendation, UserSelection } from '../types/tft'
+import { CompRecommendation, UserSelection, CompPowerTier } from '../types/tft'
 import { CHAMPION_IMAGES } from '../data/championImages'
 import { COMPONENT_ITEMS, COMBINED_ITEMS } from '../data/tftItems'
 import { GOD_BOONS } from '../data/godBoons'
+import { AUGMENTS } from '../data/augments'
+import { ARTIFACT_ITEMS } from '../data/artifactItems'
+import { normalizeAugmentTiers, normalizeArtifactTiers, POWER_TIER_ORDER } from '../utils/tieredMeta'
+import { AUGMENT_TIER_MATCH_POINTS, ARTIFACT_TIER_MATCH_POINTS } from '../config/scoring'
 
-const ITEM_IMAGES: Record<string, string> = Object.fromEntries(
-  [...COMPONENT_ITEMS, ...COMBINED_ITEMS]
-    .filter(i => i.imageUrl)
-    .map(i => [i.name, i.imageUrl as string])
-)
+const ITEM_IMAGES: Record<string, string> = Object.fromEntries([
+  ...[...COMPONENT_ITEMS, ...COMBINED_ITEMS].filter(i => i.imageUrl).map(i => [i.name, i.imageUrl as string]),
+  ...ARTIFACT_ITEMS.map(i => [i.name, i.imageUrl]),
+])
 
 // composition arrays use component IDs; selection.items uses component names
 const compIdToName: Record<string, string> = Object.fromEntries(
@@ -54,14 +57,29 @@ const PLAYSTYLE_LABEL: Record<string, string> = {
   fast9: '⚡ Fast 9',
 }
 
-function ItemIcon({ name, userComponents, isFlex = false }: { name: string; userComponents: string[]; isFlex?: boolean }) {
+function ItemIcon({
+  name,
+  userComponents,
+  combinedItems,
+  isFlex = false,
+}: {
+  name: string
+  userComponents: string[]
+  combinedItems: string[]
+  isFlex?: boolean
+}) {
   const img = ITEM_IMAGES[name]
   const progress = componentProgress(name, userComponents)
-  const built = canBuildItem(name, userComponents)
+  const hasFull = combinedItems.some(n => n === name)
+  const builtFromParts = canBuildItem(name, userComponents)
+  const built = hasFull || builtFromParts
 
-  // Determine border/glow based on item progress
   let borderStyle = ''
-  if (built) {
+  if (hasFull) {
+    borderStyle = isFlex
+      ? 'border-[#e9d5ff] shadow-[0_0_5px_#a78bfa90]'
+      : 'border-[#fcd34d] shadow-[0_0_6px_#f59e0b90]'
+  } else if (builtFromParts) {
     borderStyle = isFlex
       ? 'border-[#a78bfa] shadow-[0_0_4px_#a78bfa60]'
       : 'border-[#c89b3c] shadow-[0_0_4px_#c89b3c60]'
@@ -85,7 +103,9 @@ function ItemIcon({ name, userComponents, isFlex = false }: { name: string; user
           {name[0]}
         </div>
       )}
-      {/* Half-component dot */}
+      {hasFull && (
+        <div className="absolute top-0 right-0 w-1.5 h-1.5 bg-[#fbbf24] rounded-bl shadow-sm" title="Built item" />
+      )}
       {!built && progress === 1 && (
         <div className="absolute bottom-0 right-0 w-1.5 h-1.5 bg-[#5b9bd5] rounded-tl" />
       )}
@@ -106,7 +126,12 @@ export default function CompRecommendations({ recommendations, selection }: Prop
 
   const top = recommendations[0]
   const maxScore = top.score
-  const anySelected = selection.units.length > 0 || selection.items.length > 0 || selection.augments.length > 0
+  const anySelected =
+    selection.units.length > 0 ||
+    selection.items.length > 0 ||
+    selection.combinedItems.length > 0 ||
+    selection.augments.length > 0 ||
+    selection.artifacts.length > 0
 
   return (
     <div className="panel flex flex-col h-full">
@@ -222,7 +247,7 @@ export default function CompRecommendations({ recommendations, selection }: Prop
                                 {coreItems.length > 0 && (
                                   <div className="flex gap-0.5">
                                     {coreItems.map((item: string) => (
-                                      <ItemIcon key={item} name={item} userComponents={selection.items} />
+                                      <ItemIcon key={item} name={item} userComponents={selection.items} combinedItems={selection.combinedItems} />
                                     ))}
                                   </div>
                                 )}
@@ -231,7 +256,7 @@ export default function CompRecommendations({ recommendations, selection }: Prop
                                 {flexItems.length > 0 && (
                                   <div className="flex gap-0.5">
                                     {flexItems.map((item: string) => (
-                                      <ItemIcon key={item} name={item} userComponents={selection.items} isFlex />
+                                      <ItemIcon key={item} name={item} userComponents={selection.items} combinedItems={selection.combinedItems} isFlex />
                                     ))}
                                   </div>
                                 )}
@@ -277,14 +302,14 @@ export default function CompRecommendations({ recommendations, selection }: Prop
                                 {coreItems.length > 0 && (
                                   <div className="flex gap-0.5">
                                     {coreItems.map((item: string) => (
-                                      <ItemIcon key={item} name={item} userComponents={selection.items} isFlex />
+                                      <ItemIcon key={item} name={item} userComponents={selection.items} combinedItems={selection.combinedItems} isFlex />
                                     ))}
                                   </div>
                                 )}
                                 {flexItems.length > 0 && (
                                   <div className="flex gap-0.5">
                                     {flexItems.map((item: string) => (
-                                      <ItemIcon key={item} name={item} userComponents={selection.items} isFlex />
+                                      <ItemIcon key={item} name={item} userComponents={selection.items} combinedItems={selection.combinedItems} isFlex />
                                     ))}
                                   </div>
                                 )}
@@ -332,6 +357,104 @@ export default function CompRecommendations({ recommendations, selection }: Prop
                       </div>
                     </div>
                   )}
+
+                  {/* ── AUGMENT / ARTIFACT TIERS ───────────────────────── */}
+                  {(() => {
+                    const augTiers = normalizeAugmentTiers(rec.comp)
+                    const artTiers = normalizeArtifactTiers(rec.comp)
+                    const tierLabel: Record<CompPowerTier, string> = {
+                      base: 'Base',
+                      good: 'Good',
+                      great: 'Great',
+                      op: 'OP',
+                    }
+                    const tierColor: Record<CompPowerTier, string> = {
+                      base: '#64748b',
+                      good: '#5db85a',
+                      great: '#5b9bd5',
+                      op: '#ffb938',
+                    }
+                    const hasAnyAug = POWER_TIER_ORDER.some(t => augTiers[t].length > 0)
+                    const hasAnyArt = POWER_TIER_ORDER.some(t => artTiers[t].length > 0)
+                    if (!hasAnyAug && !hasAnyArt) return null
+                    const augRow = (tier: CompPowerTier) =>
+                      augTiers[tier].map(id => {
+                        const matched = selection.augments.includes(id)
+                        const name = AUGMENTS.find(a => a.id === id)?.name ?? id
+                        return (
+                          <span
+                            key={`aug-${tier}-${id}`}
+                            className="px-1.5 py-0.5 rounded border text-[9px]"
+                            style={{
+                              borderColor: matched ? `${tierColor[tier]}80` : '#1e2240',
+                              color: matched ? tierColor[tier] : '#64748b',
+                              backgroundColor: matched ? `${tierColor[tier]}18` : 'transparent',
+                            }}
+                          >
+                            {name}
+                            {matched ? ' ✓' : ''}
+                          </span>
+                        )
+                      })
+                    const artRow = (tier: CompPowerTier) =>
+                      artTiers[tier].map(name => {
+                        const matched = selection.artifacts.includes(name)
+                        return (
+                          <span
+                            key={`art-${tier}-${name}`}
+                            className="px-1.5 py-0.5 rounded border text-[9px] flex items-center gap-1"
+                            style={{
+                              borderColor: matched ? `${tierColor[tier]}80` : '#1e2240',
+                              color: matched ? tierColor[tier] : '#64748b',
+                              backgroundColor: matched ? `${tierColor[tier]}18` : 'transparent',
+                            }}
+                          >
+                            {ITEM_IMAGES[name] ? (
+                              <img src={ITEM_IMAGES[name]} alt="" className="w-3.5 h-3.5 rounded object-cover" />
+                            ) : null}
+                            {name}
+                            {matched ? ' ✓' : ''}
+                          </span>
+                        )
+                      })
+                    return (
+                      <div className="space-y-2 pt-1 border-t border-[#1e2240]">
+                        <div className="text-[9px] text-[#64748b] uppercase tracking-wider font-['Orbitron']">
+                          Augments (+{AUGMENT_TIER_MATCH_POINTS.base}/{AUGMENT_TIER_MATCH_POINTS.good}/{AUGMENT_TIER_MATCH_POINTS.great}/{AUGMENT_TIER_MATCH_POINTS.op}) · Artifacts (+{ARTIFACT_TIER_MATCH_POINTS.base}/{ARTIFACT_TIER_MATCH_POINTS.good}/{ARTIFACT_TIER_MATCH_POINTS.great}/{ARTIFACT_TIER_MATCH_POINTS.op})
+                        </div>
+                        {hasAnyAug && (
+                          <div className="space-y-1">
+                            <div className="text-[9px] text-[#c89b3c]">Augments</div>
+                            {POWER_TIER_ORDER.map(tier =>
+                              augTiers[tier].length > 0 ? (
+                                <div key={tier} className="flex flex-wrap gap-1 items-center">
+                                  <span className="text-[8px] w-9 shrink-0" style={{ color: tierColor[tier] }}>
+                                    {tierLabel[tier]}
+                                  </span>
+                                  {augRow(tier)}
+                                </div>
+                              ) : null
+                            )}
+                          </div>
+                        )}
+                        {hasAnyArt && (
+                          <div className="space-y-1">
+                            <div className="text-[9px] text-[#a78bfa]">Artifacts</div>
+                            {POWER_TIER_ORDER.map(tier =>
+                              artTiers[tier].length > 0 ? (
+                                <div key={tier} className="flex flex-wrap gap-1 items-center">
+                                  <span className="text-[8px] w-9 shrink-0" style={{ color: tierColor[tier] }}>
+                                    {tierLabel[tier]}
+                                  </span>
+                                  {artRow(tier)}
+                                </div>
+                              ) : null
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })()}
 
                   {/* ── GOD BOONS ─────────────────────────────────────── */}
                   {(rec.comp.recommendedGodBoons ?? []).length > 0 && (
