@@ -423,7 +423,7 @@ export default function TeamBuilder({ champions, comp, onUpdate }: TeamBuilderPr
   useEffect(() => {
     setUnitRoles(unitRolesFromComp(comp))
     setActiveItemUnit(null)
-  }, [comp.id])
+  }, [comp])
 
   const getUnitBuild = (name: string): UnitItemBuild =>
     (comp.unitBuilds ?? []).find(b => b.champion === name) ?? { champion: name, coreItems: [], flexItems: [] }
