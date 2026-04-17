@@ -236,8 +236,13 @@ export function scoreComp(
     recEmblems.some(e => id.toLowerCase().includes(e.toLowerCase().replace(/\s+/g, '_')))
   )
   const emblemPts = matchedEmblems.length * EMBLEM_POINTS_PER_MATCH
+  const emblemComponents = selection.items.filter(
+    n => n === 'Spatula' || n === 'Frying Pan'
+  ).length
+  const emblemCraftableCount = Math.min(emblemComponents, recEmblems.length)
+  const emblemComponentPts = emblemCraftableCount * AUGMENT_TIER_MATCH_POINTS.good
 
-  score += augmentPts + artifactPts + emblemPts
+  score += augmentPts + artifactPts + emblemPts + emblemComponentPts
 
   // --- Miscellaneous conditions (god boon, Stargazer constellation, etc.) ---
   const legacy = comp as MetaComp & { recommendedGodBoons?: string[] }
