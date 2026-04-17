@@ -94,7 +94,7 @@ export const ARTIFACT_TIER_MATCH_POINTS: Record<CompPowerTier, number> = {
 
 // ─── Trait emblems (matched via augment ID substring rules in compLogic) ─────
 
-export const EMBLEM_POINTS_PER_MATCH = 16
+export const EMBLEM_POINTS_PER_MATCH = 10
 
 // ─── Miscellaneous conditions (god boon, constellation, Psionic item, …) ───
 
