@@ -249,15 +249,18 @@ export function scoreComp(
       return recommendedEmblemKeys.filter(key => normalizedId.includes(key))
     })
   )
-  const emblemPts = matchedEmblemKeys.size * EMBLEM_POINTS_PER_MATCH
   const emblemComponents = selection.items.filter(
     n => n === 'Spatula' || n === 'Frying Pan'
   ).length
-  const remainingEmblemNeeds = Math.max(0, recommendedEmblemKeys.length - matchedEmblemKeys.size)
-  const emblemCraftableCount = Math.min(emblemComponents, remainingEmblemNeeds)
-  const emblemComponentPts = emblemCraftableCount * AUGMENT_TIER_MATCH_POINTS.good
+  // Unified emblem scoring: each recommended emblem can be satisfied once total
+  // (either by already-matched emblem augment or by pan/spat emblem potential).
+  const totalSatisfiedEmblems = Math.min(
+    recommendedEmblemKeys.length,
+    matchedEmblemKeys.size + emblemComponents
+  )
+  const emblemPts = totalSatisfiedEmblems * EMBLEM_POINTS_PER_MATCH
 
-  score += augmentPts + artifactPts + emblemPts + emblemComponentPts
+  score += augmentPts + artifactPts + emblemPts
 
   // --- Miscellaneous conditions (god boon, Stargazer constellation, etc.) ---
   const legacy = comp as MetaComp & { recommendedGodBoons?: string[] }
