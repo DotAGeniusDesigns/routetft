@@ -55,6 +55,10 @@ const PLAYSTYLE_LABEL: Record<string, string> = {
   fast9: '⚡ Fast 9',
 }
 
+function normalizeToken(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '')
+}
+
 function ItemIcon({
   name,
   userComponents,
@@ -514,6 +518,52 @@ export default function CompRecommendations({ recommendations, selection }: Prop
                             </div>
                           )
                         })}
+                      </div>
+                    )
+                  })()}
+
+                  {/* ── Recommended Emblems ─────────────────────────────── */}
+                  {(() => {
+                    const recEmblems = rec.comp.recommendedEmblems ?? []
+                    if (recEmblems.length === 0) return null
+                    const emblemKeys = Array.from(new Set(recEmblems.map(normalizeToken).filter(Boolean)))
+                    const matchedByAugment = new Set(
+                      recEmblems.filter(e =>
+                        selection.augments.some(id => normalizeToken(id).includes(normalizeToken(e)))
+                      )
+                    )
+                    const emblemComponents = selection.items.filter(
+                      n => n === 'Spatula' || n === 'Frying Pan'
+                    ).length
+                    const potentialCount = Math.min(emblemComponents, emblemKeys.length)
+                    return (
+                      <div className="space-y-1">
+                        <div className="text-[9px] text-[#c89b3c] uppercase tracking-wider font-['Orbitron']">
+                          Emblems
+                        </div>
+                        <div className="flex flex-wrap gap-1.5 items-center">
+                          {recEmblems.map(name => {
+                            const matched = matchedByAugment.has(name)
+                            return (
+                              <span
+                                key={name}
+                                className="px-1.5 py-0.5 rounded border text-[9px]"
+                                style={{
+                                  borderColor: matched ? '#c89b3c80' : '#1e2240',
+                                  color: matched ? '#c89b3c' : '#64748b',
+                                  backgroundColor: matched ? '#c89b3c18' : 'transparent',
+                                }}
+                              >
+                                {name} Emblem{matched ? ' ✓' : ''}
+                              </span>
+                            )
+                          })}
+                          {potentialCount > 0 && (
+                            <span className="text-[9px] text-[#64748b]">
+                              {potentialCount} emblem craft{potentialCount > 1 ? 's' : ''} possible from Spatula/Pan
+                            </span>
+                          )}
+                        </div>
                       </div>
                     )
                   })()}

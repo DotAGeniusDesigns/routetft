@@ -27,6 +27,10 @@ const compIdToName: Record<string, string> = Object.fromEntries(
   COMPONENT_ITEMS.map(c => [c.id, c.name])
 )
 
+function normalizeToken(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '')
+}
+
 export interface CompItemSlot {
   slotId: string
   champion: string
@@ -232,15 +236,17 @@ export function scoreComp(
     ARTIFACT_TIER_MATCH_POINTS
   )
 
+  const recommendedEmblemKeys = Array.from(
+    new Set((recEmblems ?? []).map(normalizeToken).filter(Boolean))
+  )
   const matchedEmblems = selection.augments.filter(id =>
-    recEmblems.some(e => id.toLowerCase().includes(e.toLowerCase().replace(/\s+/g, '_')))
+    recommendedEmblemKeys.some(key => normalizeToken(id).includes(key))
   )
   const emblemPts = matchedEmblems.length * EMBLEM_POINTS_PER_MATCH
-  const uniqueRecommendedEmblems = new Set(recEmblems.map(e => e.toLowerCase()))
   const emblemComponents = selection.items.filter(
     n => n === 'Spatula' || n === 'Frying Pan'
   ).length
-  const emblemCraftableCount = Math.min(emblemComponents, uniqueRecommendedEmblems.size)
+  const emblemCraftableCount = Math.min(emblemComponents, recommendedEmblemKeys.length)
   const emblemComponentPts = emblemCraftableCount * AUGMENT_TIER_MATCH_POINTS.good
 
   score += augmentPts + artifactPts + emblemPts + emblemComponentPts

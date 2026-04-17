@@ -473,7 +473,8 @@ export const META_COMPS: MetaComp[] = [
       ],
       "great": [],
       "op": []
-    }
+    },
+    "link": "https://tftflow.com/composition/set17/vanguard-leblanc"
   },
   {
     "id": "comp-1776247471663",

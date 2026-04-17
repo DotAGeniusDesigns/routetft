@@ -120,7 +120,9 @@ function AppContent() {
           <h1 className="font-['Orbitron'] font-black text-xl text-[#c89b3c] tracking-widest">
             route<span className="text-white">TFT</span>
           </h1>
-          <p className="text-[10px] text-[#64748b] tracking-wider">SET 17 COMP FINDER</p>
+          <p className="text-[10px] text-[#64748b] tracking-wider">
+            SET 17 COMP FINDER <span className="opacity-45">v0.4</span>
+          </p>
         </div>
 
         <div className="ml-auto flex items-center gap-4">
