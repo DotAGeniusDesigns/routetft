@@ -527,15 +527,22 @@ export default function CompRecommendations({ recommendations, selection }: Prop
                     const recEmblems = rec.comp.recommendedEmblems ?? []
                     if (recEmblems.length === 0) return null
                     const emblemKeys = Array.from(new Set(recEmblems.map(normalizeToken).filter(Boolean)))
+                    const matchedKeys = new Set(
+                      selection.augments.flatMap(id => {
+                        const normalizedId = normalizeToken(id)
+                        return emblemKeys.filter(key => normalizedId.includes(key))
+                      })
+                    )
                     const matchedByAugment = new Set(
-                      recEmblems.filter(e =>
-                        selection.augments.some(id => normalizeToken(id).includes(normalizeToken(e)))
-                      )
+                      recEmblems.filter(e => matchedKeys.has(normalizeToken(e)))
                     )
                     const emblemComponents = selection.items.filter(
                       n => n === 'Spatula' || n === 'Frying Pan'
                     ).length
-                    const potentialCount = Math.min(emblemComponents, emblemKeys.length)
+                    const potentialCount = Math.min(
+                      emblemComponents,
+                      Math.max(0, emblemKeys.length - matchedKeys.size)
+                    )
                     return (
                       <div className="space-y-1">
                         <div className="text-[9px] text-[#c89b3c] uppercase tracking-wider font-['Orbitron']">

@@ -113,7 +113,11 @@ export function allocateCompItemSlots(
 
   const ordered = [...slots].sort((a, b) => b.weight - a.weight)
   const combinedPool = [...(selection.combinedItems ?? [])]
-  const componentPool = [...selection.items]
+  // Spatula/Frying Pan are scored through emblem logic; exclude them from
+  // regular item-slot component allocation to avoid cross-path double value.
+  const componentPool = selection.items.filter(
+    n => n !== 'Spatula' && n !== 'Frying Pan'
+  )
 
   function takeBuiltItem(itemName: string): boolean {
     const idx = combinedPool.indexOf(itemName)
@@ -239,14 +243,18 @@ export function scoreComp(
   const recommendedEmblemKeys = Array.from(
     new Set((recEmblems ?? []).map(normalizeToken).filter(Boolean))
   )
-  const matchedEmblems = selection.augments.filter(id =>
-    recommendedEmblemKeys.some(key => normalizeToken(id).includes(key))
+  const matchedEmblemKeys = new Set(
+    selection.augments.flatMap(id => {
+      const normalizedId = normalizeToken(id)
+      return recommendedEmblemKeys.filter(key => normalizedId.includes(key))
+    })
   )
-  const emblemPts = matchedEmblems.length * EMBLEM_POINTS_PER_MATCH
+  const emblemPts = matchedEmblemKeys.size * EMBLEM_POINTS_PER_MATCH
   const emblemComponents = selection.items.filter(
     n => n === 'Spatula' || n === 'Frying Pan'
   ).length
-  const emblemCraftableCount = Math.min(emblemComponents, recommendedEmblemKeys.length)
+  const remainingEmblemNeeds = Math.max(0, recommendedEmblemKeys.length - matchedEmblemKeys.size)
+  const emblemCraftableCount = Math.min(emblemComponents, remainingEmblemNeeds)
   const emblemComponentPts = emblemCraftableCount * AUGMENT_TIER_MATCH_POINTS.good
 
   score += augmentPts + artifactPts + emblemPts + emblemComponentPts
