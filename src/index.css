@@ -34,6 +34,7 @@
   .tier-s { @apply bg-[#c89b3c]/20 text-[#c89b3c] border border-[#c89b3c]/40; }
   .tier-a { @apply bg-[#5b9bd5]/20 text-[#5b9bd5] border border-[#5b9bd5]/40; }
   .tier-b { @apply bg-[#94a3b8]/20 text-[#94a3b8] border border-[#94a3b8]/40; }
+  .tier-c { @apply bg-[#64748b]/20 text-[#64748b] border border-[#64748b]/40; }
   .btn-primary {
     @apply bg-[#c89b3c] hover:bg-[#d4aa4a] text-[#0d0f17] font-semibold px-4 py-2 rounded-lg
            transition-colors duration-150 text-sm;

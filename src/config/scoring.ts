@@ -96,11 +96,12 @@ export const ARTIFACT_TIER_MATCH_POINTS: Record<CompPowerTier, number> = {
 
 export const EMBLEM_POINTS_PER_MATCH = 16
 
-// ─── Space God boon ───────────────────────────────────────────────────────────
+// ─── Miscellaneous conditions (god boon, constellation, Psionic item, …) ───
 
-export const GOD_BOON_MATCH_BONUS = 2
+/** Points per user condition that appears on the comp’s recommended list */
+export const CONDITION_MATCH_BONUS = 2
 
-// ─── Meta comp letter tier (S / A / B) ───────────────────────────────────────
+// ─── Meta comp letter tier (S / A / B / C) ───────────────────────────────────
 
 /** Flat bonus by meta letter tier (no extra multiplier). */
 export const META_LETTER_TIER_FLAT_BONUS = {
@@ -110,4 +111,6 @@ export const META_LETTER_TIER_FLAT_BONUS = {
   A: 5.5,
   // No baseline boost for B tier
   B: 0,
+  // Small negative nudge for fringe comps
+  C: -3,
 } as const

@@ -41,7 +41,7 @@ export type TieredIdBuckets = Record<CompPowerTier, string[]>
 export interface MetaComp {
   id: string
   name: string
-  tier: 'S' | 'A' | 'B'
+  tier: 'S' | 'A' | 'B' | 'C'
   carries: string[]
   tank: string
   coreUnits: string[]
@@ -60,7 +60,8 @@ export interface MetaComp {
   /** Drag-tiered artifact item names (from artifact pool). */
   artifactTiers?: TieredIdBuckets
   recommendedEmblems?: string[]   // trait emblem names (e.g. "Dark Star Emblem")
-  recommendedGodBoons?: string[]  // god augment IDs that work well for this comp
+  /** God boons, Stargazer constellation, Psionic items — ids from `data/conditions.ts` */
+  recommendedConditions?: string[]
 }
 
 export interface UserSelection {
@@ -70,7 +71,8 @@ export interface UserSelection {
   units: string[]       // champion names the user holds
   augments: string[]    // augment IDs the user has
   artifacts: string[]   // artifact item names the user has
-  godBoon: string | null  // which Space God boon the player received
+  /** Active miscellaneous conditions (god boon, constellation, Psionic item, …) */
+  conditions: string[]
   stage: number
 }
 

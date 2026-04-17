@@ -1,6 +1,7 @@
 import { MetaComp, TieredIdBuckets, CompPowerTier } from '../types/tft'
 
 export const POWER_TIER_ORDER: CompPowerTier[] = ['base', 'good', 'great', 'op']
+const LEGACY_AUGMENTS_IGNORE = new Set<string>(['tft_augment_patienceisavirtue'])
 
 export const EMPTY_TIER_BUCKETS: TieredIdBuckets = {
   base: [],
@@ -34,7 +35,12 @@ export function normalizeAugmentTiers(comp: MetaComp): TieredIdBuckets {
     return dedupeAcrossTiers(comp.augmentTiers)
   }
   if (comp.recommendedAugments?.length) {
-    return { ...emptyTierBuckets(), good: [...comp.recommendedAugments] }
+    // Some legacy exports were polluted with global defaults; ignore those
+    // when creating per-comp tier buckets from flat arrays.
+    const filtered = comp.recommendedAugments.filter(id => !LEGACY_AUGMENTS_IGNORE.has(id))
+    if (filtered.length > 0) {
+      return { ...emptyTierBuckets(), good: [...filtered] }
+    }
   }
   return emptyTierBuckets()
 }
@@ -63,10 +69,14 @@ function dedupeAcrossTiers(tiers: TieredIdBuckets): TieredIdBuckets {
 export function migrateMetaCompDraft(comp: MetaComp): MetaComp {
   const augmentTiers = normalizeAugmentTiers(comp)
   const artifactTiers = comp.artifactTiers ? dedupeAcrossTiers(comp.artifactTiers) : emptyTierBuckets()
+  const legacy = comp as MetaComp & { recommendedGodBoons?: string[] }
+  const recommendedConditions =
+    comp.recommendedConditions?.length ? comp.recommendedConditions : legacy.recommendedGodBoons ?? []
   return {
     ...comp,
     augmentTiers,
     artifactTiers,
     recommendedAugments: flattenTierBuckets(augmentTiers),
+    recommendedConditions,
   }
 }

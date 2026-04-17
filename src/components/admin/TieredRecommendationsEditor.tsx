@@ -24,6 +24,22 @@ function cloneTiers(t: TieredIdBuckets): TieredIdBuckets {
   }
 }
 
+function normalizeTiers(t: TieredIdBuckets): TieredIdBuckets {
+  const out = cloneTiers(t)
+  const seen = new Set<string>()
+  for (const tier of POWER_TIER_ORDER) {
+    out[tier] = (out[tier] ?? [])
+      .map(k => k.trim())
+      .filter(Boolean)
+      .filter(k => {
+        if (seen.has(k)) return false
+        seen.add(k)
+        return true
+      })
+  }
+  return out
+}
+
 function parseDrag(e: React.DragEvent): DragPayload | null {
   try {
     const raw = e.dataTransfer.getData('application/json')
@@ -59,8 +75,8 @@ export default function TieredRecommendationsEditor({
 
   const occupied = useMemo(() => {
     const s = new Set<string>()
-    POWER_TIER_ORDER.forEach(t => tiers[t].forEach(k => s.add(k)))
-    staging.forEach(k => s.add(k))
+    POWER_TIER_ORDER.forEach(t => tiers[t].forEach(k => s.add(k.trim())))
+    staging.forEach(k => s.add(k.trim()))
     return s
   }, [tiers, staging])
 
@@ -75,26 +91,28 @@ export default function TieredRecommendationsEditor({
 
   const labelFor = (key: string) =>
     mode === 'augment'
-      ? AUGMENTS.find(a => a.id === key)?.name ?? key
+      ? AUGMENTS.find(a => a.id === key.trim())?.name ?? key
       : key
 
   const removeEverywhere = (key: string) => {
-    setStaging(s => s.filter(k => k !== key))
-    onChange(removeKeyFromTiers(cloneTiers(tiers), key))
+    const normalizedKey = key.trim()
+    setStaging(s => s.filter(k => k.trim() !== normalizedKey))
+    onChange(removeKeyFromTiers(normalizeTiers(tiers), normalizedKey))
   }
 
   const assignKey = (key: string, target: 'staging' | CompPowerTier) => {
-    const nextStaging = staging.filter(k => k !== key)
-    let nextTiers = removeKeyFromTiers(cloneTiers(tiers), key)
+    const normalizedKey = key.trim()
+    const nextStaging = staging.filter(k => k.trim() !== normalizedKey)
+    let nextTiers = removeKeyFromTiers(normalizeTiers(tiers), normalizedKey)
 
     if (target === 'staging') {
-      if (!nextStaging.includes(key)) nextStaging.push(key)
+      if (!nextStaging.includes(normalizedKey)) nextStaging.push(normalizedKey)
       setStaging(nextStaging)
       onChange(nextTiers)
       return
     }
 
-    if (!nextTiers[target].includes(key)) nextTiers[target].push(key)
+    if (!nextTiers[target].includes(normalizedKey)) nextTiers[target].push(normalizedKey)
     setStaging(nextStaging)
     onChange(nextTiers)
   }
@@ -133,7 +151,14 @@ export default function TieredRecommendationsEditor({
         <span className="truncate">{labelFor(k)}</span>
         <button
           type="button"
+          draggable={false}
+          onMouseDown={e => {
+            // Prevent parent draggable chip from swallowing remove clicks.
+            e.preventDefault()
+            e.stopPropagation()
+          }}
           onClick={e => {
+            e.preventDefault()
             e.stopPropagation()
             removeEverywhere(k)
           }}
@@ -146,8 +171,9 @@ export default function TieredRecommendationsEditor({
   }
 
   const tryAddFromSearch = (key: string) => {
-    if (occupied.has(key)) return
-    assignKey(key, 'staging')
+    const normalizedKey = key.trim()
+    if (occupied.has(normalizedKey)) return
+    assignKey(normalizedKey, 'staging')
     setSearch('')
   }
 

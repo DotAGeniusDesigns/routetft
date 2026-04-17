@@ -1,7 +1,12 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { TFTAugment, MetaComp } from '../types/tft'
 import { CHAMPIONS } from '../data/set17Champions'
-import { GOD_BOONS } from '../data/godBoons'
+import {
+  CONDITION_CATEGORY_LABEL,
+  ConditionCategory,
+  conditionsInCategory,
+  Condition,
+} from '../data/conditions'
 import TeamBuilder from './admin/TeamBuilder'
 import TieredRecommendationsEditor from './admin/TieredRecommendationsEditor'
 import { migrateMetaCompDraft, flattenTierBuckets, emptyTierBuckets } from '../utils/tieredMeta'
@@ -25,6 +30,7 @@ const TIER_COLORS: Record<string, string> = {
   S: '#c89b3c',
   A: '#5b9bd5',
   B: '#94a3b8',
+  C: '#64748b',
 }
 
 function Badge({ label, color }: { label: string; color: string }) {
@@ -311,36 +317,62 @@ function EmblemPicker({ selectedEmblems, onChange }: {
   )
 }
 
-function GodBoonPicker({ selected, onChange }: {
+const ADMIN_CONDITION_SECTIONS: ConditionCategory[] = [
+  'god_boon',
+  'stargazer_constellation',
+  'psionic_item',
+]
+
+function ConditionsPicker({ selected, onChange }: {
   selected: string[]
   onChange: (ids: string[]) => void
 }) {
   const toggle = (id: string) =>
     onChange(selected.includes(id) ? selected.filter(x => x !== id) : [...selected, id])
 
+  const chipLabel = (c: Condition) =>
+    c.category === 'god_boon' && c.championPortrait ? c.championPortrait : c.label
+
   return (
-    <div className="p-4 rounded-lg border border-[#1e2240] bg-[#0d0f17] space-y-2">
-      <div className="text-[10px] font-semibold text-[#a78bfa] uppercase tracking-wider font-['Orbitron']">Recommended God Boons</div>
-      <div className="flex flex-wrap gap-1.5">
-        {GOD_BOONS.map(boon => {
-          const isSelected = selected.includes(boon.id)
-          return (
-            <button
-              key={boon.id}
-              onClick={() => toggle(boon.id)}
-              className="px-2.5 py-1 rounded text-[11px] font-semibold border transition-all"
-              style={{
-                borderColor: isSelected ? '#a78bfa' : '#2d3154',
-                backgroundColor: isSelected ? '#a78bfa20' : '#13162a',
-                color: isSelected ? '#a78bfa' : '#64748b',
-                boxShadow: isSelected ? '0 0 6px #a78bfa40' : 'none',
-              }}
-            >
-              {boon.champion}
-            </button>
-          )
-        })}
+    <div className="p-4 rounded-lg border border-[#1e2240] bg-[#0d0f17] space-y-3">
+      <div className="text-[10px] font-semibold text-[#a78bfa] uppercase tracking-wider font-['Orbitron']">
+        Recommended conditions
       </div>
+      <p className="text-[10px] text-[#64748b] leading-snug">
+        God boons, Stargazer constellations, and Psionic items that strengthen this comp.
+      </p>
+      {ADMIN_CONDITION_SECTIONS.map(cat => {
+        const items = conditionsInCategory(cat)
+        return (
+          <div key={cat} className="space-y-1.5">
+            <div className="text-[9px] text-[#64748b] uppercase tracking-wider font-['Orbitron']">
+              {CONDITION_CATEGORY_LABEL[cat]}
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {items.map(c => {
+                const isSelected = selected.includes(c.id)
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => toggle(c.id)}
+                    title={c.label}
+                    className="px-2.5 py-1 rounded text-[11px] font-semibold border transition-all max-w-full truncate"
+                    style={{
+                      borderColor: isSelected ? '#a78bfa' : '#2d3154',
+                      backgroundColor: isSelected ? '#a78bfa20' : '#13162a',
+                      color: isSelected ? '#a78bfa' : '#64748b',
+                      boxShadow: isSelected ? '0 0 6px #a78bfa40' : 'none',
+                    }}
+                  >
+                    {chipLabel(c)}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )
+      })}
     </div>
   )
 }
@@ -408,7 +440,7 @@ function MetaCompsTab() {
       earlyGame: [],
       playstyle: 'standard',
       description: '',
-      recommendedGodBoons: [],
+      recommendedConditions: [],
       recommendedAugments: [],
       augmentTiers: emptyTierBuckets(),
       artifactTiers: emptyTierBuckets(),
@@ -449,8 +481,22 @@ function MetaCompsTab() {
                 <span
                   className="text-[10px] font-bold px-1 rounded"
                   style={{
-                    color: comp.tier === 'S' ? '#c89b3c' : comp.tier === 'A' ? '#5b9bd5' : '#94a3b8',
-                    backgroundColor: comp.tier === 'S' ? '#c89b3c20' : comp.tier === 'A' ? '#5b9bd520' : '#94a3b820',
+                    color:
+                      comp.tier === 'S'
+                        ? '#c89b3c'
+                        : comp.tier === 'A'
+                          ? '#5b9bd5'
+                          : comp.tier === 'B'
+                            ? '#94a3b8'
+                            : '#64748b',
+                    backgroundColor:
+                      comp.tier === 'S'
+                        ? '#c89b3c20'
+                        : comp.tier === 'A'
+                          ? '#5b9bd520'
+                          : comp.tier === 'B'
+                            ? '#94a3b820'
+                            : '#64748b20',
                   }}
                 >
                   {comp.tier}
@@ -506,7 +552,7 @@ function MetaCompsTab() {
                 <Select
                   value={activeDraft.tier}
                   onChange={v => updateDraft(activeDraft.id, { tier: v as MetaComp['tier'] })}
-                  options={['S', 'A', 'B']}
+                  options={['S', 'A', 'B', 'C']}
                 />
               </div>
               <div>
@@ -536,9 +582,9 @@ function MetaCompsTab() {
               </div>
             </div>
 
-            <GodBoonPicker
-              selected={activeDraft.recommendedGodBoons ?? []}
-              onChange={ids => updateDraft(activeDraft.id, { recommendedGodBoons: ids })}
+            <ConditionsPicker
+              selected={activeDraft.recommendedConditions ?? []}
+              onChange={ids => updateDraft(activeDraft.id, { recommendedConditions: ids })}
             />
 
             <TieredRecommendationsEditor

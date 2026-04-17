@@ -66,10 +66,20 @@ export default function ItemPanel({
         {/* Components — compact */}
         <div className="shrink-0 px-2.5 pt-2 pb-2 border-b border-[#1e2240]">
           <div className="text-[8px] text-[#64748b] uppercase tracking-wider mb-1.5">Components</div>
-          <p className="text-[8px] text-[#4a556a] mb-1.5 leading-snug">
-            Click to add. Duplicates stack.
-          </p>
-          <div className="grid grid-cols-4 gap-1 max-h-[min(40vh,220px)] overflow-y-auto pr-0.5">
+          {selectedItems.length > 0 && (
+            <div className="flex flex-wrap gap-1 mb-1.5 max-h-12 overflow-y-auto pr-0.5">
+              {selectedItems.map((name, i) => (
+                <button
+                  key={`co-${name}-${i}`}
+                  onClick={() => onToggle(`__remove__${name}`)}
+                  className="chip bg-[#1e2240] text-[#94a3b8] border border-[#2d3154] hover:border-red-500/50 hover:text-red-400 transition-colors text-[9px] py-0.5"
+                >
+                  {name} ×
+                </button>
+              ))}
+            </div>
+          )}
+          <div className="grid grid-cols-4 gap-1">
             {items.map(item => {
               const count = compCounts[item.name] || 0
               const color = ITEM_COLORS[item.name] || '#c89b3c'
@@ -123,9 +133,19 @@ export default function ItemPanel({
         {/* Full combined items */}
         <div className="flex-1 flex flex-col min-h-0 px-2.5 pt-2 pb-2">
           <div className="text-[8px] text-[#64748b] uppercase tracking-wider mb-1">Full items</div>
-          <p className="text-[8px] text-[#4a556a] mb-1.5 leading-snug">
-            Already-built items score higher than the same two components.
-          </p>
+          {selectedCombined.length > 0 && (
+            <div className="flex flex-wrap gap-1 mb-1.5 max-h-12 overflow-y-auto pr-0.5">
+              {selectedCombined.map((name, i) => (
+                <button
+                  key={`cb-${name}-${i}`}
+                  onClick={() => onToggleCombined(`__remove__${name}`)}
+                  className="chip bg-[#1a1520] text-[#c89b3c] border border-[#c89b3c]/25 hover:border-red-500/50 hover:text-red-400 transition-colors text-[9px] py-0.5"
+                >
+                  {name} ×
+                </button>
+              ))}
+            </div>
+          )}
           <input
             type="text"
             value={combinedSearch}
@@ -178,40 +198,6 @@ export default function ItemPanel({
           </div>
         </div>
 
-        {/* Selected summary */}
-        {totalPicks > 0 && (
-          <div className="shrink-0 px-2.5 pt-2 pb-2.5 border-t border-[#1e2240] max-h-28 overflow-y-auto">
-            <div className="text-[8px] text-[#64748b] mb-1">Selected (click × to remove last)</div>
-            {selectedItems.length > 0 && (
-              <div className="flex flex-wrap gap-1 mb-1.5">
-                {selectedItems.map((name, i) => (
-                  <button
-                    key={`co-${name}-${i}`}
-                    onClick={() => onToggle(`__remove__${name}`)}
-                    className="chip bg-[#1e2240] text-[#94a3b8] border border-[#2d3154] hover:border-red-500/50 hover:text-red-400 transition-colors text-[9px] py-0.5"
-                  >
-                    <span className="opacity-50 mr-0.5">C</span>
-                    {name} ×
-                  </button>
-                ))}
-              </div>
-            )}
-            {selectedCombined.length > 0 && (
-              <div className="flex flex-wrap gap-1">
-                {selectedCombined.map((name, i) => (
-                  <button
-                    key={`cb-${name}-${i}`}
-                    onClick={() => onToggleCombined(`__remove__${name}`)}
-                    className="chip bg-[#1a1520] text-[#c89b3c] border border-[#c89b3c]/25 hover:border-red-500/50 hover:text-red-400 transition-colors text-[9px] py-0.5"
-                  >
-                    <span className="opacity-50 mr-0.5">★</span>
-                    {name} ×
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
       </div>
     </div>
   )

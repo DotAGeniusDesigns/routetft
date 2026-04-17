@@ -7,7 +7,7 @@ import {
   EARLY_GAME_STAGE_MULTIPLIER,
   EMBLEM_POINTS_PER_MATCH,
   FULL_ITEM_SLOT_PROGRESS,
-  GOD_BOON_MATCH_BONUS,
+  CONDITION_MATCH_BONUS,
   ITEM_CORE_SLOT_WEIGHTS,
   ITEM_FLEX_WEIGHT,
   ITEM_ROLE_SLOT_MULTIPLIERS,
@@ -26,6 +26,127 @@ import {
 const compIdToName: Record<string, string> = Object.fromEntries(
   COMPONENT_ITEMS.map(c => [c.id, c.name])
 )
+
+export interface CompItemSlot {
+  slotId: string
+  champion: string
+  item: string
+  slotType: 'core' | 'flex'
+  slotIndex: number
+  weight: number
+  progress: number
+}
+
+function roleSlotMultiplier(
+  carries: Set<string>,
+  tank: string,
+  champion: string,
+  slotType: 'core' | 'flex'
+): number {
+  const isCarry = carries.has(champion)
+  const isTank = tank === champion
+  if (isCarry && slotType === 'core') return ITEM_ROLE_SLOT_MULTIPLIERS.carryCore
+  if (isCarry && slotType === 'flex') return ITEM_ROLE_SLOT_MULTIPLIERS.carryFlex
+  if (isTank && slotType === 'core') return ITEM_ROLE_SLOT_MULTIPLIERS.tankCore
+  if (isTank && slotType === 'flex') return ITEM_ROLE_SLOT_MULTIPLIERS.tankFlex
+  if (slotType === 'core') return ITEM_ROLE_SLOT_MULTIPLIERS.otherCore
+  return ITEM_ROLE_SLOT_MULTIPLIERS.otherFlex
+}
+
+export function allocateCompItemSlots(
+  comp: MetaComp,
+  selection: UserSelection
+): CompItemSlot[] {
+  const carries = new Set(comp.carries ?? [])
+  const tank = comp.tank ?? ''
+  const slots: CompItemSlot[] = []
+
+  const unitBuilds = comp.unitBuilds ?? []
+  if (unitBuilds.length > 0) {
+    unitBuilds.forEach(build => {
+      build.coreItems.forEach((item, idx) =>
+        slots.push({
+          slotId: `${build.champion}|core|${idx}`,
+          champion: build.champion,
+          item,
+          slotType: 'core',
+          slotIndex: idx,
+          weight:
+            (ITEM_CORE_SLOT_WEIGHTS[idx] ?? ITEM_FLEX_WEIGHT) *
+            roleSlotMultiplier(carries, tank, build.champion, 'core'),
+          progress: 0,
+        })
+      )
+      build.flexItems.forEach((item, idx) =>
+        slots.push({
+          slotId: `${build.champion}|flex|${idx}`,
+          champion: build.champion,
+          item,
+          slotType: 'flex',
+          slotIndex: idx,
+          weight: ITEM_FLEX_WEIGHT * roleSlotMultiplier(carries, tank, build.champion, 'flex'),
+          progress: 0,
+        })
+      )
+    })
+  } else {
+    comp.carryBuilds?.forEach(build => {
+      build.items.forEach((item, idx) =>
+        slots.push({
+          slotId: `${build.champion}|core|${idx}`,
+          champion: build.champion,
+          item,
+          slotType: 'core',
+          slotIndex: idx,
+          weight:
+            (ITEM_CORE_SLOT_WEIGHTS[idx] ?? ITEM_FLEX_WEIGHT) *
+            ITEM_ROLE_SLOT_MULTIPLIERS.carryCore,
+          progress: 0,
+        })
+      )
+    })
+  }
+
+  const ordered = [...slots].sort((a, b) => b.weight - a.weight)
+  const combinedPool = [...(selection.combinedItems ?? [])]
+  const componentPool = [...selection.items]
+
+  function takeBuiltItem(itemName: string): boolean {
+    const idx = combinedPool.indexOf(itemName)
+    if (idx === -1) return false
+    combinedPool.splice(idx, 1)
+    return true
+  }
+
+  function claimComponents(itemName: string): number {
+    const combined = COMBINED_ITEMS.find(i => i.name === itemName)
+    if (!combined || combined.composition.length < 2) return 0
+    const a = compIdToName[combined.composition[0]] ?? combined.composition[0]
+    const b = compIdToName[combined.composition[1]] ?? combined.composition[1]
+    let claimed = 0
+    const idxA = componentPool.indexOf(a)
+    if (idxA !== -1) {
+      claimed++
+      componentPool.splice(idxA, 1)
+    }
+    const idxB = componentPool.indexOf(b)
+    if (idxB !== -1) {
+      claimed++
+      componentPool.splice(idxB, 1)
+    }
+    return claimed
+  }
+
+  ordered.forEach(slot => {
+    if (takeBuiltItem(slot.item)) {
+      slot.progress = FULL_ITEM_SLOT_PROGRESS
+      return
+    }
+    slot.progress = claimComponents(slot.item) / 2
+  })
+
+  return slots
+}
 
 export function scoreComp(
   comp: MetaComp,
@@ -69,93 +190,13 @@ export function scoreComp(
         : EARLY_GAME_STAGE_MULTIPLIER.stage4Plus
   score += earlyRatio * EARLY_GAME_MAX_BONUS * earlyWeight
 
-  // --- Item score (depleting combined + component pools) ---
-  type ItemSlot = { item: string; weight: number }
-  const slots: ItemSlot[] = []
-  const roleSlotMultiplier = (
-    champion: string,
-    slotType: 'core' | 'flex'
-  ): number => {
-    const isCarry = carries.has(champion)
-    const isTank = tank === champion
-    if (isCarry && slotType === 'core') return ITEM_ROLE_SLOT_MULTIPLIERS.carryCore
-    if (isCarry && slotType === 'flex') return ITEM_ROLE_SLOT_MULTIPLIERS.carryFlex
-    if (isTank && slotType === 'core') return ITEM_ROLE_SLOT_MULTIPLIERS.tankCore
-    if (isTank && slotType === 'flex') return ITEM_ROLE_SLOT_MULTIPLIERS.tankFlex
-    if (slotType === 'core') return ITEM_ROLE_SLOT_MULTIPLIERS.otherCore
-    return ITEM_ROLE_SLOT_MULTIPLIERS.otherFlex
-  }
-
-  const unitBuilds = comp.unitBuilds ?? []
-  if (unitBuilds.length > 0) {
-    unitBuilds.forEach(build => {
-      build.coreItems.forEach((item, idx) =>
-        slots.push({
-          item,
-          weight:
-            (ITEM_CORE_SLOT_WEIGHTS[idx] ?? ITEM_FLEX_WEIGHT) *
-            roleSlotMultiplier(build.champion, 'core'),
-        })
-      )
-      build.flexItems.forEach(item =>
-        slots.push({
-          item,
-          weight: ITEM_FLEX_WEIGHT * roleSlotMultiplier(build.champion, 'flex'),
-        })
-      )
-    })
-  } else {
-    comp.carryBuilds?.forEach(build => {
-      build.items.forEach((item, idx) =>
-        slots.push({
-          item,
-          weight:
-            (ITEM_CORE_SLOT_WEIGHTS[idx] ?? ITEM_FLEX_WEIGHT) *
-            ITEM_ROLE_SLOT_MULTIPLIERS.carryCore,
-        })
-      )
-    })
-  }
-  slots.sort((a, b) => b.weight - a.weight)
-
-  const combinedPool = [...(selection.combinedItems ?? [])]
-  const pool = [...selection.items]
-
-  function takeBuiltItem(itemName: string): boolean {
-    const idx = combinedPool.indexOf(itemName)
-    if (idx === -1) return false
-    combinedPool.splice(idx, 1)
-    return true
-  }
-
-  function claimComponents(itemName: string): number {
-    const combined = COMBINED_ITEMS.find(i => i.name === itemName)
-    if (!combined || combined.composition.length < 2) return 0
-    const a = compIdToName[combined.composition[0]] ?? combined.composition[0]
-    const b = compIdToName[combined.composition[1]] ?? combined.composition[1]
-    let claimed = 0
-    const idxA = pool.indexOf(a)
-    if (idxA !== -1) { claimed++; pool.splice(idxA, 1) }
-    const idxB = pool.indexOf(b)
-    if (idxB !== -1) { claimed++; pool.splice(idxB, 1) }
-    return claimed
-  }
-
-  function slotProgress(itemName: string): number {
-    // Built-item precedence:
-    // 1) consume exact completed item first (from combinedItems)
-    // 2) only if missing, try to consume loose components
-    // This prevents double-crediting one slot from both representations while
-    // still allowing extra components to satisfy other item slots.
-    if (takeBuiltItem(itemName)) return FULL_ITEM_SLOT_PROGRESS
-    return claimComponents(itemName) / 2
-  }
-
+  // --- Item score (finite resource allocation across all item slots) ---
+  const itemSlots = allocateCompItemSlots(comp, selection)
   let weightedProgress = 0
   let totalItemWeight = 0
-  slots.forEach(({ item, weight }) => {
-    totalItemWeight += weight
-    weightedProgress += weight * slotProgress(item)
+  itemSlots.forEach(slot => {
+    totalItemWeight += slot.weight
+    weightedProgress += slot.weight * slot.progress
   })
 
   const itemScore = (weightedProgress / Math.max(totalItemWeight, 1)) * SUBSCORE_SCALE
@@ -198,11 +239,12 @@ export function scoreComp(
 
   score += augmentPts + artifactPts + emblemPts
 
-  // --- God boon ---
-  const recGodBoons = comp.recommendedGodBoons ?? []
-  const godBoonBonus =
-    selection.godBoon && recGodBoons.includes(selection.godBoon) ? GOD_BOON_MATCH_BONUS : 0
-  score += godBoonBonus
+  // --- Miscellaneous conditions (god boon, Stargazer constellation, etc.) ---
+  const legacy = comp as MetaComp & { recommendedGodBoons?: string[] }
+  const recConditions =
+    comp.recommendedConditions?.length ? comp.recommendedConditions : legacy.recommendedGodBoons ?? []
+  const matches = selection.conditions.filter(id => recConditions.includes(id)).length
+  score += matches * CONDITION_MATCH_BONUS
 
   // --- Meta letter tier ---
   // Always apply as a small baseline quality adjustment.

@@ -22,7 +22,7 @@ export default function ArtifactPanel({ selectedArtifacts, onToggle }: Props) {
   }, [selectedArtifacts])
 
   return (
-    <div className="border-t border-[#1e2240] px-3 py-2 flex flex-col gap-2 shrink-0">
+    <div className="px-3 py-2 flex flex-col gap-2 shrink-0">
       <div className="flex items-center justify-between">
         <span className="text-[#a78bfa] font-semibold font-['Orbitron'] text-xs tracking-wide">ARTIFACTS</span>
         {selectedArtifacts.length > 0 && (

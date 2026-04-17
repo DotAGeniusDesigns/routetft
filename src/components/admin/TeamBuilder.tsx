@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { Champion, MetaComp, UnitItemBuild } from '../../types/tft'
 import { CHAMPION_IMAGES } from '../../data/championImages'
 import { COMPONENT_ITEMS, COMBINED_ITEMS } from '../../data/tftItems'
@@ -164,7 +164,7 @@ const ANIMA_PSIONIC_ITEMS = [
   // Anima trait items
   "Anima Blessing", "Anima Core", "Anima Crown",
   // Psionic trait items
-  "Psionic Shiv", "Psionic Crown", "Psionic Blessing",
+  "Biomatter Preserver", "Drone Uplink", "Malware Matrix", "Sympathetic Implant", "Target-Lock Optics",
   // Other special/radiant items
   "Radiant Infinity Edge", "Radiant Bloodthirster", "Radiant Warmog's", "Radiant Sunfire Cape",
   "Radiant Guinsoo's Rageblade", "Radiant Titan's Resolve", "Radiant Gargoyle Stoneplate",
@@ -311,6 +311,15 @@ function UnitItemPanel({
   )
 }
 
+function unitRolesFromComp(comp: MetaComp): Record<string, Role> {
+  const roles: Record<string, Role> = {}
+  comp.carries.forEach(u => { roles[u] = 'carry' })
+  if (comp.tank) roles[comp.tank] = 'tank'
+  comp.earlyGame?.forEach(u => { if (!roles[u]) roles[u] = 'early' })
+  comp.flexUnits?.forEach(u => { if (!roles[u]) roles[u] = 'flex' })
+  return roles
+}
+
 // ─── Main TeamBuilder ─────────────────────────────────────────────────────────
 interface TeamBuilderProps {
   champions: Champion[]
@@ -323,15 +332,8 @@ export default function TeamBuilder({ champions, comp, onUpdate }: TeamBuilderPr
   const [traitFilter, setTraitFilter] = useState('')
   const [search, setSearch] = useState('')
 
-  // Local state for unit roles
-  const [unitRoles, setUnitRoles] = useState<Record<string, Role>>(() => {
-    const roles: Record<string, Role> = {}
-    comp.carries.forEach(u => { roles[u] = 'carry' })
-    if (comp.tank) roles[comp.tank] = 'tank'
-    comp.earlyGame?.forEach(u => { if (!roles[u]) roles[u] = 'early' })
-    comp.flexUnits?.forEach(u => { if (!roles[u]) roles[u] = 'flex' })
-    return roles
-  })
+  // Local state for unit roles (must reset when switching comps — prior state keyed by champion name only)
+  const [unitRoles, setUnitRoles] = useState<Record<string, Role>>(() => unitRolesFromComp(comp))
 
   // All selected units = core + flex + early
   const allSelected = useMemo(() => {
@@ -417,6 +419,11 @@ export default function TeamBuilder({ champions, comp, onUpdate }: TeamBuilderPr
 
   // Unit builds (per-unit item assignment)
   const [activeItemUnit, setActiveItemUnit] = useState<string | null>(null)
+
+  useEffect(() => {
+    setUnitRoles(unitRolesFromComp(comp))
+    setActiveItemUnit(null)
+  }, [comp.id])
 
   const getUnitBuild = (name: string): UnitItemBuild =>
     (comp.unitBuilds ?? []).find(b => b.champion === name) ?? { champion: name, coreItems: [], flexItems: [] }

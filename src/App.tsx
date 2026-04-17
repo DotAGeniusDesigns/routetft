@@ -7,7 +7,7 @@ import UnitPanel from './components/UnitPanel'
 import ItemPanel from './components/ItemPanel'
 import AugmentPanel from './components/AugmentPanel'
 import ArtifactPanel from './components/ArtifactPanel'
-import GodBoonPanel from './components/GodBoonPanel'
+import ConditionsPanel from './components/ConditionsPanel'
 import CompRecommendations from './components/CompRecommendations'
 
 function AppContent() {
@@ -19,7 +19,7 @@ function AppContent() {
     units: [],
     augments: [],
     artifacts: [],
-    godBoon: null,
+    conditions: [],
     stage: 2,
   })
 
@@ -83,8 +83,15 @@ function AppContent() {
     }))
   }
 
-  const setGodBoon = (id: string | null) =>
-    setSelection(prev => ({ ...prev, godBoon: id }))
+  const toggleCondition = (id: string) =>
+    setSelection(prev => ({
+      ...prev,
+      conditions: prev.conditions.includes(id)
+        ? prev.conditions.filter(c => c !== id)
+        : [...prev.conditions, id],
+    }))
+
+  const clearConditions = () => setSelection(prev => ({ ...prev, conditions: [] }))
 
   const clearAll = () =>
     setSelection({
@@ -93,7 +100,7 @@ function AppContent() {
       units: [],
       augments: [],
       artifacts: [],
-      godBoon: null,
+      conditions: [],
       stage: selection.stage,
     })
 
@@ -103,7 +110,7 @@ function AppContent() {
     selection.units.length +
     selection.augments.length +
     selection.artifacts.length +
-    (selection.godBoon ? 1 : 0)
+    selection.conditions.length
 
   return (
     <div className="min-h-screen bg-[#0d0f17] flex flex-col">
@@ -156,8 +163,17 @@ function AppContent() {
             onToggle={toggleUnit}
           />
         </div>
-        <div className="shrink-0 w-[260px] border-r border-[#1e2240] overflow-hidden flex flex-col">
-          <GodBoonPanel selected={selection.godBoon} onSelect={setGodBoon} />
+        <div className="shrink-0 w-[300px] border-r border-[#1e2240] overflow-hidden flex flex-col min-h-0">
+          <ItemPanel
+            items={componentItems}
+            selectedItems={selection.items}
+            onToggle={toggleItem}
+            combinedCatalog={combinedItems}
+            selectedCombined={selection.combinedItems}
+            onToggleCombined={toggleCombinedItem}
+          />
+        </div>
+        <div className="shrink-0 w-[260px] border-r border-[#1e2240] bg-[#13162a] overflow-hidden flex flex-col min-h-0 divide-y divide-[#1e2240]">
           <AugmentPanel
             augments={augments}
             selectedAugments={selection.augments}
@@ -167,16 +183,11 @@ function AppContent() {
             selectedArtifacts={selection.artifacts}
             onToggle={toggleArtifact}
           />
-          <div className="flex-1 overflow-hidden flex flex-col min-h-0">
-            <ItemPanel
-              items={componentItems}
-              selectedItems={selection.items}
-              onToggle={toggleItem}
-              combinedCatalog={combinedItems}
-              selectedCombined={selection.combinedItems}
-              onToggleCombined={toggleCombinedItem}
-            />
-          </div>
+          <ConditionsPanel
+            selected={selection.conditions}
+            onToggle={toggleCondition}
+            onClear={clearConditions}
+          />
         </div>
         <div className="flex-1 min-w-[280px] overflow-hidden flex flex-col">
           <CompRecommendations recommendations={recommendations} selection={selection} />

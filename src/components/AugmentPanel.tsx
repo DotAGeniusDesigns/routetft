@@ -29,7 +29,7 @@ export default function AugmentPanel({ augments, selectedAugments, onToggle }: P
   )
 
   return (
-    <div className="border-t border-[#1e2240] px-3 py-2 flex flex-col gap-2">
+    <div className="px-3 py-2 flex flex-col gap-2">
       <div className="flex items-center justify-between">
         <span className="text-[#c89b3c] font-semibold font-['Orbitron'] text-xs tracking-wide">AUGMENTS</span>
         {selectedAugments.length > 0 && (

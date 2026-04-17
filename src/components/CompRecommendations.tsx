@@ -2,11 +2,10 @@ import React, { useState } from 'react'
 import { CompRecommendation, UserSelection, CompPowerTier } from '../types/tft'
 import { CHAMPION_IMAGES } from '../data/championImages'
 import { COMPONENT_ITEMS, COMBINED_ITEMS } from '../data/tftItems'
-import { GOD_BOONS } from '../data/godBoons'
+import { getConditionById } from '../data/conditions'
 import { AUGMENTS } from '../data/augments'
 import { ARTIFACT_ITEMS } from '../data/artifactItems'
 import { normalizeAugmentTiers, normalizeArtifactTiers, POWER_TIER_ORDER } from '../utils/tieredMeta'
-import { AUGMENT_TIER_MATCH_POINTS, ARTIFACT_TIER_MATCH_POINTS } from '../config/scoring'
 
 const ITEM_IMAGES: Record<string, string> = Object.fromEntries([
   ...[...COMPONENT_ITEMS, ...COMBINED_ITEMS].filter(i => i.imageUrl).map(i => [i.name, i.imageUrl as string]),
@@ -18,7 +17,7 @@ const compIdToName: Record<string, string> = Object.fromEntries(
   COMPONENT_ITEMS.map(c => [c.id, c.name])
 )
 
-// For a given combined item name, count how many of its 2 components the user has
+// Independent per-item progress (does not reserve shared components across other items)
 function componentProgress(itemName: string, userComponents: string[]): number {
   const combined = COMBINED_ITEMS.find(i => i.name === itemName)
   if (!combined || combined.composition.length < 2) return 0
@@ -27,15 +26,13 @@ function componentProgress(itemName: string, userComponents: string[]): number {
   const copy = [...userComponents]
   let have = 0
   const idxA = copy.indexOf(a)
-  if (idxA !== -1) { have++; copy.splice(idxA, 1) }
+  if (idxA !== -1) {
+    have++
+    copy.splice(idxA, 1)
+  }
   const idxB = copy.indexOf(b)
-  if (idxB !== -1) { have++ }
+  if (idxB !== -1) have++
   return have
-}
-
-// Whether the user can fully build this item right now
-function canBuildItem(itemName: string, userComponents: string[]): boolean {
-  return componentProgress(itemName, userComponents) === 2
 }
 
 interface Props {
@@ -47,6 +44,7 @@ const TIER_CLASS: Record<string, string> = {
   S: 'tier-s',
   A: 'tier-a',
   B: 'tier-b',
+  C: 'tier-c',
 }
 
 const PLAYSTYLE_LABEL: Record<string, string> = {
@@ -71,7 +69,8 @@ function ItemIcon({
   const img = ITEM_IMAGES[name]
   const progress = componentProgress(name, userComponents)
   const hasFull = combinedItems.some(n => n === name)
-  const builtFromParts = canBuildItem(name, userComponents)
+  const builtFromParts = progress === 2
+  const possibleFromParts = progress === 1
   const built = hasFull || builtFromParts
 
   let borderStyle = ''
@@ -83,7 +82,7 @@ function ItemIcon({
     borderStyle = isFlex
       ? 'border-[#a78bfa] shadow-[0_0_4px_#a78bfa60]'
       : 'border-[#c89b3c] shadow-[0_0_4px_#c89b3c60]'
-  } else if (progress === 1) {
+  } else if (possibleFromParts) {
     borderStyle = 'border-[#5b9bd5]'
   } else {
     borderStyle = isFlex ? 'border-[#3b0764]/40' : 'border-[#2d3154]'
@@ -246,8 +245,13 @@ export default function CompRecommendations({ recommendations, selection }: Prop
                                 {/* Core items */}
                                 {coreItems.length > 0 && (
                                   <div className="flex gap-0.5">
-                                    {coreItems.map((item: string) => (
-                                      <ItemIcon key={item} name={item} userComponents={selection.items} combinedItems={selection.combinedItems} />
+                                    {coreItems.map((item: string, idx: number) => (
+                                      <ItemIcon
+                                        key={`${u}-core-${idx}-${item}`}
+                                        name={item}
+                                        userComponents={selection.items}
+                                        combinedItems={selection.combinedItems}
+                                      />
                                     ))}
                                   </div>
                                 )}
@@ -255,8 +259,14 @@ export default function CompRecommendations({ recommendations, selection }: Prop
                                 {/* Flex items — shown below core, dashed/muted */}
                                 {flexItems.length > 0 && (
                                   <div className="flex gap-0.5">
-                                    {flexItems.map((item: string) => (
-                                      <ItemIcon key={item} name={item} userComponents={selection.items} combinedItems={selection.combinedItems} isFlex />
+                                    {flexItems.map((item: string, idx: number) => (
+                                      <ItemIcon
+                                        key={`${u}-flex-${idx}-${item}`}
+                                        name={item}
+                                        userComponents={selection.items}
+                                        combinedItems={selection.combinedItems}
+                                        isFlex
+                                      />
                                     ))}
                                   </div>
                                 )}
@@ -301,15 +311,27 @@ export default function CompRecommendations({ recommendations, selection }: Prop
                                 </div>
                                 {coreItems.length > 0 && (
                                   <div className="flex gap-0.5">
-                                    {coreItems.map((item: string) => (
-                                      <ItemIcon key={item} name={item} userComponents={selection.items} combinedItems={selection.combinedItems} isFlex />
+                                    {coreItems.map((item: string, idx: number) => (
+                                      <ItemIcon
+                                        key={`${u}-core-flex-${idx}-${item}`}
+                                        name={item}
+                                        userComponents={selection.items}
+                                        combinedItems={selection.combinedItems}
+                                        isFlex
+                                      />
                                     ))}
                                   </div>
                                 )}
                                 {flexItems.length > 0 && (
                                   <div className="flex gap-0.5">
-                                    {flexItems.map((item: string) => (
-                                      <ItemIcon key={item} name={item} userComponents={selection.items} combinedItems={selection.combinedItems} isFlex />
+                                    {flexItems.map((item: string, idx: number) => (
+                                      <ItemIcon
+                                        key={`${u}-flex-flex-${idx}-${item}`}
+                                        name={item}
+                                        userComponents={selection.items}
+                                        combinedItems={selection.combinedItems}
+                                        isFlex
+                                      />
                                     ))}
                                   </div>
                                 )}
@@ -419,9 +441,6 @@ export default function CompRecommendations({ recommendations, selection }: Prop
                       })
                     return (
                       <div className="space-y-2 pt-1 border-t border-[#1e2240]">
-                        <div className="text-[9px] text-[#64748b] uppercase tracking-wider font-['Orbitron']">
-                          Augments (+{AUGMENT_TIER_MATCH_POINTS.base}/{AUGMENT_TIER_MATCH_POINTS.good}/{AUGMENT_TIER_MATCH_POINTS.great}/{AUGMENT_TIER_MATCH_POINTS.op}) · Artifacts (+{ARTIFACT_TIER_MATCH_POINTS.base}/{ARTIFACT_TIER_MATCH_POINTS.good}/{ARTIFACT_TIER_MATCH_POINTS.great}/{ARTIFACT_TIER_MATCH_POINTS.op})
-                        </div>
                         {hasAnyAug && (
                           <div className="space-y-1">
                             <div className="text-[9px] text-[#c89b3c]">Augments</div>
@@ -456,34 +475,50 @@ export default function CompRecommendations({ recommendations, selection }: Prop
                     )
                   })()}
 
-                  {/* ── GOD BOONS ─────────────────────────────────────── */}
-                  {(rec.comp.recommendedGodBoons ?? []).length > 0 && (
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-[9px] text-[#64748b] uppercase tracking-wider font-['Orbitron'] shrink-0">God Boon</span>
-                      {(rec.comp.recommendedGodBoons ?? []).map(boonId => {
-                        const boon = GOD_BOONS.find(b => b.id === boonId)
-                        if (!boon) return null
-                        const matched = selection.godBoon === boonId
-                        return (
-                          <div
-                            key={boonId}
-                            className="flex items-center gap-1 px-2 py-0.5 rounded border"
-                            style={{
-                              borderColor: matched ? '#a78bfa60' : '#1e2240',
-                              backgroundColor: matched ? '#a78bfa15' : 'transparent',
-                            }}
-                          >
-                            <span className={`text-[10px] font-semibold ${matched ? 'text-[#a78bfa]' : 'text-[#64748b]'}`}>
-                              {boon.champion}
-                            </span>
-                            {matched && <span className="text-[9px] text-[#a78bfa]">✓</span>}
-                          </div>
-                        )
-                      })}
-                    </div>
-                  )}
+                  {/* ── Conditions (god boon, constellation, Psionic item, …) ── */}
+                  {(() => {
+                    const legacy = rec.comp as typeof rec.comp & { recommendedGodBoons?: string[] }
+                    const recConditions =
+                      rec.comp.recommendedConditions?.length
+                        ? rec.comp.recommendedConditions
+                        : legacy.recommendedGodBoons ?? []
+                    if (recConditions.length === 0) return null
+                    return (
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-[9px] text-[#64748b] uppercase tracking-wider font-['Orbitron'] shrink-0">
+                          Conditions
+                        </span>
+                        {recConditions.map(condId => {
+                          const c = getConditionById(condId)
+                          const label =
+                            c?.championPortrait ??
+                            c?.label ??
+                            condId
+                          const matched = selection.conditions.includes(condId)
+                          return (
+                            <div
+                              key={condId}
+                              className="flex items-center gap-1 px-2 py-0.5 rounded border"
+                              style={{
+                                borderColor: matched ? '#a78bfa60' : '#1e2240',
+                                backgroundColor: matched ? '#a78bfa15' : 'transparent',
+                              }}
+                              title={c?.label ?? condId}
+                            >
+                              <span
+                                className={`text-[10px] font-semibold ${matched ? 'text-[#a78bfa]' : 'text-[#64748b]'}`}
+                              >
+                                {label}
+                              </span>
+                              {matched && <span className="text-[9px] text-[#a78bfa]">✓</span>}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )
+                  })()}
 
-                  {/* Source link */}
+                  {/* Guide link */}
                   {rec.comp.link && (
                     <a
                       href={rec.comp.link}
@@ -492,7 +527,7 @@ export default function CompRecommendations({ recommendations, selection }: Prop
                       className="inline-flex items-center gap-1 text-[10px] text-[#64748b] hover:text-[#94a3b8] transition-colors"
                     >
                       <span>↗</span>
-                      <span>Source</span>
+                      <span>Link to full guide on tftflow</span>
                     </a>
                   )}
                 </div>
