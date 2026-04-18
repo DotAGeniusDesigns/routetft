@@ -420,10 +420,13 @@ export default function TeamBuilder({ champions, comp, onUpdate }: TeamBuilderPr
   // Unit builds (per-unit item assignment)
   const [activeItemUnit, setActiveItemUnit] = useState<string | null>(null)
 
+  // Only reset when switching to another meta comp — not on every draft patch (e.g. adding items),
+  // or the item panel would close and selection would “reset” on each update.
   useEffect(() => {
     setUnitRoles(unitRolesFromComp(comp))
     setActiveItemUnit(null)
-  }, [comp])
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `comp` identity changes every keystroke; we only reset when `comp.id` changes
+  }, [comp.id])
 
   const getUnitBuild = (name: string): UnitItemBuild =>
     (comp.unitBuilds ?? []).find(b => b.champion === name) ?? { champion: name, coreItems: [], flexItems: [] }

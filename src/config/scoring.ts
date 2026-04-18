@@ -76,6 +76,7 @@ export const ITEM_ROLE_SLOT_MULTIPLIERS = {
 } as const
 
 // ─── Augment & artifact tier lists (meta comp editor tiers) ──────────────────
+// Trait emblems (`emblemTiers`) are scored with the same per-tier numbers as artifacts.
 
 export const AUGMENT_TIER_MATCH_POINTS: Record<CompPowerTier, number> = {
   base: 4,
@@ -91,10 +92,6 @@ export const ARTIFACT_TIER_MATCH_POINTS: Record<CompPowerTier, number> = {
   great: 16,
   op: 24,
 }
-
-// ─── Trait emblems (matched via augment ID substring rules in compLogic) ─────
-
-export const EMBLEM_POINTS_PER_MATCH = 10
 
 // ─── Miscellaneous conditions (god boon, constellation, Psionic item, …) ───
 

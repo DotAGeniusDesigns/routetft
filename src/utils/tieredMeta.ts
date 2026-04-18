@@ -50,6 +50,19 @@ export function normalizeArtifactTiers(comp: MetaComp): TieredIdBuckets {
   return dedupeAcrossTiers(comp.artifactTiers)
 }
 
+export function normalizeEmblemTiers(comp: MetaComp): TieredIdBuckets {
+  const hasStructured =
+    comp.emblemTiers &&
+    POWER_TIER_ORDER.some(tier => (comp.emblemTiers![tier] ?? []).length > 0)
+  if (hasStructured && comp.emblemTiers) {
+    return dedupeAcrossTiers(comp.emblemTiers)
+  }
+  if (comp.recommendedEmblems?.length) {
+    return { ...emptyTierBuckets(), good: [...comp.recommendedEmblems] }
+  }
+  return emptyTierBuckets()
+}
+
 function dedupeAcrossTiers(tiers: TieredIdBuckets): TieredIdBuckets {
   const seen = new Set<string>()
   const out = emptyTierBuckets()
@@ -69,6 +82,7 @@ function dedupeAcrossTiers(tiers: TieredIdBuckets): TieredIdBuckets {
 export function migrateMetaCompDraft(comp: MetaComp): MetaComp {
   const augmentTiers = normalizeAugmentTiers(comp)
   const artifactTiers = comp.artifactTiers ? dedupeAcrossTiers(comp.artifactTiers) : emptyTierBuckets()
+  const emblemTiers = normalizeEmblemTiers(comp)
   const legacy = comp as MetaComp & { recommendedGodBoons?: string[] }
   const recommendedConditions =
     comp.recommendedConditions?.length ? comp.recommendedConditions : legacy.recommendedGodBoons ?? []
@@ -76,7 +90,9 @@ export function migrateMetaCompDraft(comp: MetaComp): MetaComp {
     ...comp,
     augmentTiers,
     artifactTiers,
+    emblemTiers,
     recommendedAugments: flattenTierBuckets(augmentTiers),
+    recommendedEmblems: flattenTierBuckets(emblemTiers),
     recommendedConditions,
   }
 }

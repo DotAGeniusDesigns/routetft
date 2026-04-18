@@ -4,7 +4,7 @@ export const META_COMPS: MetaComp[] = [
   {
     "id": "comp-1776233002536",
     "name": "NOVA",
-    "tier": "B",
+    "tier": "A",
     "carries": [
       "Kindred",
       "Master Yi"
@@ -109,12 +109,20 @@ export const META_COMPS: MetaComp[] = [
       "op": []
     },
     "recommendedConditions": [],
-    "link": "https://tftflow.com/composition/set17/n-o-v-a"
+    "link": "https://tftflow.com/composition/set17/n-o-v-a",
+    "emblemTiers": {
+      "base": [],
+      "good": [],
+      "great": [
+        "N.O.V.A."
+      ],
+      "op": []
+    }
   },
   {
     "id": "comp-1776239119036",
     "name": "Vex Fast 9",
-    "tier": "A",
+    "tier": "B",
     "carries": [
       "Vex",
       "Blitzcrank"
@@ -234,12 +242,18 @@ export const META_COMPS: MetaComp[] = [
       "op": []
     },
     "recommendedConditions": [],
-    "link": "https://tftflow.com/composition/set17/vex-ap-fast-9"
+    "link": "https://tftflow.com/composition/set17/vex-ap-fast-9",
+    "emblemTiers": {
+      "base": [],
+      "good": [],
+      "great": [],
+      "op": []
+    }
   },
   {
     "id": "comp-1776239772552",
     "name": "Mecha",
-    "tier": "A",
+    "tier": "B",
     "carries": [
       "Aurelion Sol"
     ],
@@ -356,7 +370,14 @@ export const META_COMPS: MetaComp[] = [
         "Silvermere Dawn"
       ],
       "op": []
-    }
+    },
+    "emblemTiers": {
+      "base": [],
+      "good": [],
+      "great": [],
+      "op": []
+    },
+    "link": "https://tftflow.com/composition/set17/mecha"
   },
   {
     "id": "comp-1776246726367",
@@ -442,8 +463,8 @@ export const META_COMPS: MetaComp[] = [
       "tft_augment_holdtheline"
     ],
     "recommendedEmblems": [
-      "Voyager",
-      "Vanguard"
+      "Vanguard",
+      "Voyager"
     ],
     "augmentTiers": {
       "base": [
@@ -474,7 +495,17 @@ export const META_COMPS: MetaComp[] = [
       "great": [],
       "op": []
     },
-    "link": "https://tftflow.com/composition/set17/vanguard-leblanc"
+    "link": "https://tftflow.com/composition/set17/vanguard-leblanc",
+    "emblemTiers": {
+      "base": [
+        "Vanguard"
+      ],
+      "good": [
+        "Voyager"
+      ],
+      "great": [],
+      "op": []
+    }
   },
   {
     "id": "comp-1776247471663",
@@ -589,7 +620,16 @@ export const META_COMPS: MetaComp[] = [
       "great": [],
       "op": []
     },
-    "link": "https://tftflow.com/composition/set17/kaisa-rogues"
+    "link": "https://tftflow.com/composition/set17/kaisa-rogues",
+    "emblemTiers": {
+      "base": [
+        "Rogue",
+        "Voyager"
+      ],
+      "good": [],
+      "great": [],
+      "op": []
+    }
   },
   {
     "id": "comp-1776247803690",
@@ -701,7 +741,16 @@ export const META_COMPS: MetaComp[] = [
       "great": [],
       "op": []
     },
-    "link": "https://tftflow.com/composition/set17/primordian-reroll"
+    "link": "https://tftflow.com/composition/set17/primordian-reroll",
+    "emblemTiers": {
+      "base": [
+        "N.O.V.A.",
+        "Rogue"
+      ],
+      "good": [],
+      "great": [],
+      "op": []
+    }
   },
   {
     "id": "comp-1776247980040",
@@ -795,15 +844,16 @@ export const META_COMPS: MetaComp[] = [
       "tft6_augment_cyberneticuplink2",
       "tft_augment_crymeariver",
       "tft_augment_cosmicrestart",
-      "tft_augment_traittreeplus",
-      "tft_augment_spreadingrootsplus"
+      "tft_augment_spreadingrootsplus",
+      "tft_augment_traittreeplus"
     ],
     "recommendedEmblems": [
-      "Space Groove",
       "Bastion",
       "Brawler",
+      "Vanguard",
       "Timebreaker",
-      "Rogue"
+      "Rogue",
+      "Space Groove"
     ],
     "augmentTiers": {
       "base": [
@@ -820,11 +870,12 @@ export const META_COMPS: MetaComp[] = [
         "tft_augment_bodyguardtraining",
         "tft6_augment_cyberneticuplink2",
         "tft_augment_crymeariver",
-        "tft_augment_cosmicrestart",
-        "tft_augment_traittreeplus",
-        "tft_augment_spreadingrootsplus"
+        "tft_augment_cosmicrestart"
       ],
-      "great": [],
+      "great": [
+        "tft_augment_spreadingrootsplus",
+        "tft_augment_traittreeplus"
+      ],
       "op": []
     },
     "artifactTiers": {
@@ -835,12 +886,27 @@ export const META_COMPS: MetaComp[] = [
       "great": [],
       "op": []
     },
-    "link": "https://tftflow.com/composition/set17/space-groove-nami"
+    "link": "https://tftflow.com/composition/set17/space-groove-nami",
+    "emblemTiers": {
+      "base": [
+        "Bastion",
+        "Brawler",
+        "Vanguard"
+      ],
+      "good": [
+        "Timebreaker",
+        "Rogue"
+      ],
+      "great": [
+        "Space Groove"
+      ],
+      "op": []
+    }
   },
   {
     "id": "comp-1776248204704",
     "name": "Graves Fast 9",
-    "tier": "B",
+    "tier": "A",
     "carries": [
       "Graves",
       "Vex"
@@ -931,6 +997,7 @@ export const META_COMPS: MetaComp[] = [
       "tft_augment_duoqueue",
       "tft6_augment_onetwofive",
       "tft_augment_upwardmobility",
+      "tft_augment_lategamescaling",
       "tft9_augment_hedgefund",
       "tft6_augment_maxlevel10"
     ],
@@ -950,7 +1017,8 @@ export const META_COMPS: MetaComp[] = [
         "tft_augment_gildedsteel",
         "tft_augment_duoqueue",
         "tft6_augment_onetwofive",
-        "tft_augment_upwardmobility"
+        "tft_augment_upwardmobility",
+        "tft_augment_lategamescaling"
       ],
       "great": [
         "tft9_augment_hedgefund",
@@ -967,7 +1035,13 @@ export const META_COMPS: MetaComp[] = [
       "great": [],
       "op": []
     },
-    "link": "https://tftflow.com/composition/set17/graves-fast-9"
+    "link": "https://tftflow.com/composition/set17/graves-fast-9",
+    "emblemTiers": {
+      "base": [],
+      "good": [],
+      "great": [],
+      "op": []
+    }
   },
   {
     "id": "comp-1776248476602",
@@ -1055,8 +1129,8 @@ export const META_COMPS: MetaComp[] = [
       "tft_augment_swordoverflow"
     ],
     "recommendedEmblems": [
-      "Voyager",
       "Bastion",
+      "Voyager",
       "Timebreaker",
       "Rogue"
     ],
@@ -1093,7 +1167,19 @@ export const META_COMPS: MetaComp[] = [
       "great": [],
       "op": []
     },
-    "link": "https://tftflow.com/composition/set17/meeple-corki"
+    "link": "https://tftflow.com/composition/set17/meeple-corki",
+    "emblemTiers": {
+      "base": [
+        "Bastion"
+      ],
+      "good": [],
+      "great": [
+        "Voyager",
+        "Timebreaker",
+        "Rogue"
+      ],
+      "op": []
+    }
   },
   {
     "id": "comp-1776248832378",
@@ -1209,7 +1295,15 @@ export const META_COMPS: MetaComp[] = [
       "great": [],
       "op": []
     },
-    "link": "https://tftflow.com/composition/set17/stargazer-xayah"
+    "link": "https://tftflow.com/composition/set17/stargazer-xayah",
+    "emblemTiers": {
+      "base": [],
+      "good": [
+        "Stargazer"
+      ],
+      "great": [],
+      "op": []
+    }
   },
   {
     "id": "comp-1776249107966",
@@ -1415,8 +1509,8 @@ export const META_COMPS: MetaComp[] = [
       "tft_augment_bronzeforlife2"
     ],
     "recommendedEmblems": [
-      "Voyager",
-      "Psionic"
+      "Psionic",
+      "Voyager"
     ],
     "augmentTiers": {
       "base": [
@@ -1447,7 +1541,17 @@ export const META_COMPS: MetaComp[] = [
       "great": [],
       "op": []
     },
-    "link": "https://tftflow.com/composition/set17/viktor-illaoi-reroll"
+    "link": "https://tftflow.com/composition/set17/viktor-illaoi-reroll",
+    "emblemTiers": {
+      "base": [
+        "Psionic"
+      ],
+      "good": [
+        "Voyager"
+      ],
+      "great": [],
+      "op": []
+    }
   },
   {
     "id": "comp-1776249525249",
@@ -1574,7 +1678,7 @@ export const META_COMPS: MetaComp[] = [
   {
     "id": "comp-1776406889062",
     "name": "Anima Viktor",
-    "tier": "A",
+    "tier": "B",
     "carries": [
       "Aurora",
       "Viktor"
@@ -1650,6 +1754,7 @@ export const META_COMPS: MetaComp[] = [
       "tft6_augment_tinytitans",
       "tft6_augment_gachaaddict",
       "tft_augment_patienceisavirtue",
+      "tft17_augment_animasquad_commander",
       "tft9_augment_tiniesttitanplus"
     ],
     "augmentTiers": {
@@ -1668,7 +1773,8 @@ export const META_COMPS: MetaComp[] = [
       "great": [
         "tft6_augment_tinytitans",
         "tft6_augment_gachaaddict",
-        "tft_augment_patienceisavirtue"
+        "tft_augment_patienceisavirtue",
+        "tft17_augment_animasquad_commander"
       ],
       "op": [
         "tft9_augment_tiniesttitanplus"
@@ -1681,6 +1787,358 @@ export const META_COMPS: MetaComp[] = [
       "op": []
     },
     "recommendedEmblems": [],
-    "link": "https://tftflow.com/composition/set17/anima-viktor-reroll"
+    "link": "https://tftflow.com/composition/set17/anima-viktor-reroll",
+    "emblemTiers": {
+      "base": [],
+      "good": [],
+      "great": [],
+      "op": []
+    }
+  },
+  {
+    "id": "comp-1776510954992",
+    "name": "Veigar Printer",
+    "tier": "B",
+    "carries": [
+      "Veigar",
+      "Corki"
+    ],
+    "tank": "Rammus",
+    "coreUnits": [
+      "Veigar",
+      "Meepsie",
+      "Mordekaiser",
+      "Illaoi",
+      "Lissandra",
+      "Rammus",
+      "Corki",
+      "Shen",
+      "Bard"
+    ],
+    "flexUnits": [],
+    "unitBuilds": [
+      {
+        "champion": "Veigar",
+        "coreItems": [
+          "Blue Buff",
+          "Jeweled Gauntlet",
+          "Nashor's Tooth"
+        ],
+        "flexItems": []
+      },
+      {
+        "champion": "Corki",
+        "coreItems": [
+          "Blue Buff",
+          "Deathblade",
+          "Last Whisper"
+        ],
+        "flexItems": []
+      },
+      {
+        "champion": "Rammus",
+        "coreItems": [
+          "Bramble Vest",
+          "Protector's Vow",
+          "Steadfast Heart"
+        ],
+        "flexItems": []
+      }
+    ],
+    "carryBuilds": [],
+    "keyComponents": [],
+    "earlyGame": [],
+    "playstyle": "standard",
+    "description": "",
+    "recommendedConditions": [],
+    "recommendedAugments": [
+      "tft_augment_chargetransfer1",
+      "tft_augment_chargetransfer2",
+      "tft_augment_climbtheladder1",
+      "tft_augment_climbtheladder2",
+      "tft_augment_worththewaitgold"
+    ],
+    "augmentTiers": {
+      "base": [
+        "tft_augment_chargetransfer1",
+        "tft_augment_chargetransfer2",
+        "tft_augment_climbtheladder1"
+      ],
+      "good": [
+        "tft_augment_climbtheladder2",
+        "tft_augment_worththewaitgold"
+      ],
+      "great": [],
+      "op": []
+    },
+    "artifactTiers": {
+      "base": [
+        "Gold Collector"
+      ],
+      "good": [],
+      "great": [],
+      "op": []
+    },
+    "emblemTiers": {
+      "base": [],
+      "good": [
+        "Meeple"
+      ],
+      "great": [],
+      "op": []
+    },
+    "recommendedEmblems": [
+      "Meeple"
+    ],
+    "link": "https://tftflow.com/composition/set17/meeple-veigar"
+  },
+  {
+    "id": "comp-1776511254122",
+    "name": "Shepherds",
+    "tier": "B",
+    "carries": [
+      "Karma",
+      "LeBlanc"
+    ],
+    "tank": "Illaoi",
+    "coreUnits": [
+      "Lissandra",
+      "Leona",
+      "Meepsie",
+      "Illaoi",
+      "Karma",
+      "LeBlanc",
+      "The Mighty Mech",
+      "Sona"
+    ],
+    "flexUnits": [
+      "Morgana"
+    ],
+    "unitBuilds": [
+      {
+        "champion": "Karma",
+        "coreItems": [
+          "Void Staff",
+          "Morellonomicon",
+          "Spear of Shojin"
+        ],
+        "flexItems": []
+      },
+      {
+        "champion": "LeBlanc",
+        "coreItems": [
+          "Giant Slayer",
+          "Jeweled Gauntlet",
+          "Guinsoo's Rageblade"
+        ],
+        "flexItems": [
+          "Hextech Gunblade",
+          "Striker's Flail"
+        ]
+      },
+      {
+        "champion": "Illaoi",
+        "coreItems": [
+          "Spirit Visage",
+          "Sunfire Cape",
+          "Ionic Spark"
+        ],
+        "flexItems": [
+          "Warmog's Armor",
+          "Bramble Vest",
+          "Dragon's Claw"
+        ]
+      }
+    ],
+    "carryBuilds": [],
+    "keyComponents": [],
+    "earlyGame": [
+      "Mordekaiser",
+      "Zoe"
+    ],
+    "playstyle": "standard",
+    "description": "",
+    "recommendedConditions": [],
+    "recommendedAugments": [
+      "tft_augment_aurafarming",
+      "tft_augment_epicrolldown",
+      "tft_augment_gildedsteel",
+      "tft9_augment_jeweledlotus",
+      "tft_augment_urfsgambit",
+      "tft7_augment_urfsgrabbag2",
+      "tft_augment_speedydoublekill",
+      "tft_augment_glasscannonii",
+      "tft_augment_heavyisthecrown"
+    ],
+    "augmentTiers": {
+      "base": [
+        "tft_augment_aurafarming",
+        "tft_augment_epicrolldown",
+        "tft_augment_gildedsteel",
+        "tft9_augment_jeweledlotus"
+      ],
+      "good": [
+        "tft_augment_urfsgambit",
+        "tft7_augment_urfsgrabbag2",
+        "tft_augment_speedydoublekill",
+        "tft_augment_glasscannonii",
+        "tft_augment_heavyisthecrown"
+      ],
+      "great": [],
+      "op": []
+    },
+    "artifactTiers": {
+      "base": [],
+      "good": [
+        "Flickerblades",
+        "Statikk Shiv"
+      ],
+      "great": [],
+      "op": []
+    },
+    "emblemTiers": {
+      "base": [],
+      "good": [
+        "Voyager"
+      ],
+      "great": [
+        "Shepherd"
+      ],
+      "op": []
+    },
+    "recommendedEmblems": [
+      "Voyager",
+      "Shepherd"
+    ],
+    "link": "https://tftflow.com/composition/set17/shepherd-leblanc"
+  },
+  {
+    "id": "comp-1776511496221",
+    "name": "Knocked Up Samira",
+    "tier": "B",
+    "carries": [
+      "Samira",
+      "Xayah"
+    ],
+    "tank": "Nunu & Willump",
+    "coreUnits": [
+      "Jax",
+      "Samira",
+      "Ornn",
+      "Rhaast",
+      "Nunu & Willump",
+      "Xayah",
+      "Blitzcrank"
+    ],
+    "flexUnits": [
+      "Jhin"
+    ],
+    "unitBuilds": [
+      {
+        "champion": "Nunu & Willump",
+        "coreItems": [
+          "Protector's Vow",
+          "Protector's Vow",
+          "Protector's Vow"
+        ],
+        "flexItems": [
+          "Spirit Visage",
+          "Warmog's Armor",
+          "Sunfire Cape"
+        ]
+      },
+      {
+        "champion": "Xayah",
+        "coreItems": [
+          "Last Whisper",
+          "Guinsoo's Rageblade",
+          "Kraken's Fury"
+        ],
+        "flexItems": []
+      },
+      {
+        "champion": "Samira",
+        "coreItems": [
+          "Spear of Shojin",
+          "Deathblade",
+          "Giant Slayer"
+        ],
+        "flexItems": [
+          "Infinity Edge",
+          "Last Whisper"
+        ]
+      },
+      {
+        "champion": "Ornn",
+        "coreItems": [
+          "Warmog's Armor",
+          "Sunfire Cape",
+          "Spirit Visage"
+        ],
+        "flexItems": [
+          "Evenshroud",
+          "Bramble Vest",
+          "Dragon's Claw"
+        ]
+      }
+    ],
+    "carryBuilds": [],
+    "keyComponents": [],
+    "earlyGame": [
+      "Nasus",
+      "Pantheon",
+      "Ezreal",
+      "Rek'Sai"
+    ],
+    "playstyle": "standard",
+    "description": "",
+    "recommendedConditions": [],
+    "recommendedAugments": [
+      "tft6_augment_calculatedloss",
+      "tft9_augment_commander_rollingfordays",
+      "tft10_augment_heroicgrabbag",
+      "tft_augment_exclusivecustomization",
+      "tft_augment_legionofthrees",
+      "tft_augment_patienceisavirtue",
+      "tft_augment_tragicalblade",
+      "tft_augment_twotanky",
+      "tft_augment_swordoverflow",
+      "tft6_augment_tradesector",
+      "tft6_augment_gachaaddict"
+    ],
+    "augmentTiers": {
+      "base": [
+        "tft6_augment_calculatedloss",
+        "tft9_augment_commander_rollingfordays",
+        "tft10_augment_heroicgrabbag",
+        "tft_augment_exclusivecustomization",
+        "tft_augment_legionofthrees"
+      ],
+      "good": [
+        "tft_augment_patienceisavirtue",
+        "tft_augment_tragicalblade",
+        "tft_augment_twotanky",
+        "tft_augment_swordoverflow",
+        "tft6_augment_tradesector"
+      ],
+      "great": [
+        "tft6_augment_gachaaddict"
+      ],
+      "op": []
+    },
+    "artifactTiers": {
+      "base": [],
+      "good": [],
+      "great": [],
+      "op": []
+    },
+    "emblemTiers": {
+      "base": [],
+      "good": [],
+      "great": [],
+      "op": []
+    },
+    "recommendedEmblems": [],
+    "link": "https://tftflow.com/composition/set17/samira-reroll"
   }
 ]

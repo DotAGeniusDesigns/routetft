@@ -59,6 +59,8 @@ export interface MetaComp {
   augmentTiers?: TieredIdBuckets
   /** Drag-tiered artifact item names (from artifact pool). */
   artifactTiers?: TieredIdBuckets
+  /** Drag-tiered trait emblem names (e.g. "Dark Star"). */
+  emblemTiers?: TieredIdBuckets
   recommendedEmblems?: string[]   // trait emblem names (e.g. "Dark Star Emblem")
   /** God boons, Stargazer constellation, Psionic items — ids from `data/conditions.ts` */
   recommendedConditions?: string[]

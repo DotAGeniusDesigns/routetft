@@ -4,7 +4,7 @@ import { AUGMENTS } from '../../data/augments'
 import { ARTIFACT_ITEMS } from '../../data/artifactItems'
 import { POWER_TIER_ORDER, removeKeyFromTiers } from '../../utils/tieredMeta'
 
-type PoolMode = 'augment' | 'artifact'
+type PoolMode = 'augment' | 'artifact' | 'emblem'
 
 const TIER_STYLES: Record<CompPowerTier, { label: string; accent: string; border: string }> = {
   base: { label: 'Base', accent: '#94a3b8', border: '#47556960' },
@@ -56,6 +56,7 @@ interface Props {
   tiers: TieredIdBuckets
   onChange: (next: TieredIdBuckets) => void
   resetKey: string
+  emblemOptions?: string[]
 }
 
 export default function TieredRecommendationsEditor({
@@ -64,6 +65,7 @@ export default function TieredRecommendationsEditor({
   tiers,
   onChange,
   resetKey,
+  emblemOptions = [],
 }: Props) {
   const [staging, setStaging] = useState<string[]>([])
   const [search, setSearch] = useState('')
@@ -86,8 +88,11 @@ export default function TieredRecommendationsEditor({
     if (mode === 'augment') {
       return AUGMENTS.filter(a => a.name.toLowerCase().includes(q)).slice(0, 12)
     }
-    return ARTIFACT_ITEMS.filter(a => a.name.toLowerCase().includes(q)).slice(0, 12)
-  }, [search, mode])
+    if (mode === 'artifact') {
+      return ARTIFACT_ITEMS.filter(a => a.name.toLowerCase().includes(q)).slice(0, 12)
+    }
+    return emblemOptions.filter(name => name.toLowerCase().includes(q)).slice(0, 12)
+  }, [search, mode, emblemOptions])
 
   const labelFor = (key: string) =>
     mode === 'augment'
@@ -191,13 +196,24 @@ export default function TieredRecommendationsEditor({
           type="text"
           value={search}
           onChange={e => setSearch(e.target.value)}
-          placeholder={mode === 'augment' ? 'Search augments…' : 'Search artifacts…'}
+          placeholder={
+            mode === 'augment'
+              ? 'Search augments…'
+              : mode === 'artifact'
+                ? 'Search artifacts…'
+                : 'Search emblems…'
+          }
           className="w-full bg-[#0d0f17] border border-[#2d3154] text-[#e2e8f0] rounded px-2 py-1.5 text-xs focus:outline-none focus:border-[#c89b3c]/60 placeholder-[#4a556a]"
         />
         {searchHits.length > 0 && (
           <div className="absolute z-20 top-full left-0 right-0 mt-0.5 bg-[#13162a] border border-[#2d3154] rounded-lg overflow-hidden shadow-xl max-h-40 overflow-y-auto">
             {searchHits.map(hit => {
-              const key = mode === 'augment' ? (hit as { id: string }).id : (hit as { name: string }).name
+              const key =
+                mode === 'augment'
+                  ? (hit as { id: string }).id
+                  : mode === 'artifact'
+                    ? (hit as { name: string }).name
+                    : (hit as string)
               const dis = occupied.has(key)
               return (
                 <button

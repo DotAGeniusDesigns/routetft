@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { TFTAugment, MetaComp } from '../types/tft'
 import { CHAMPIONS } from '../data/set17Champions'
 import {
@@ -228,7 +228,7 @@ function AugmentsTab() {
   )
 }
 
-// ─── Emblem Picker ────────────────────────────────────────────────────────────
+// ─── Emblem options ───────────────────────────────────────────────────────────
 
 const TRAITS = [
   'Anima', 'N.O.V.A.', 'Dark Star', 'Space Groove', 'Meeple', 'Stargazer',
@@ -237,85 +237,7 @@ const TRAITS = [
   'Marauder', 'Channeler', 'Voyager', 'Shepherd', 'Replicator', 'Fateweaver', 'Redeemer',
 ]
 
-function EmblemPicker({ selectedEmblems, onChange }: {
-  selectedEmblems: string[]
-  onChange: (names: string[]) => void
-}) {
-  const [search, setSearch] = useState('')
-  const [highlightIdx, setHighlightIdx] = useState(-1)
-  const dropdownRef = React.useRef<HTMLDivElement>(null)
-
-  const results = useMemo(() => {
-    if (!search.trim()) return []
-    return TRAITS.filter(t => t.toLowerCase().includes(search.toLowerCase())).slice(0, 10)
-  }, [search])
-
-  React.useEffect(() => { setHighlightIdx(-1) }, [search])
-
-  React.useEffect(() => {
-    if (highlightIdx >= 0 && dropdownRef.current) {
-      const el = dropdownRef.current.children[highlightIdx] as HTMLElement
-      el?.scrollIntoView({ block: 'nearest' })
-    }
-  }, [highlightIdx])
-
-  const add = (name: string) => {
-    onChange([...selectedEmblems, name])
-    setSearch('')
-    setHighlightIdx(-1)
-  }
-
-  const removeAt = (idx: number) =>
-    onChange(selectedEmblems.filter((_, i) => i !== idx))
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (results.length === 0) return
-    if (e.key === 'ArrowDown') {
-      e.preventDefault()
-      setHighlightIdx(i => Math.min(i + 1, results.length - 1))
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault()
-      setHighlightIdx(i => Math.max(i - 1, 0))
-    } else if (e.key === 'Enter' && highlightIdx >= 0) {
-      e.preventDefault()
-      add(results[highlightIdx])
-    } else if (e.key === 'Escape') {
-      setSearch('')
-    }
-  }
-
-  return (
-    <div className="p-4 rounded-lg border border-[#1e2240] bg-[#0d0f17] space-y-2">
-      <div className="text-[10px] font-semibold text-[#c89b3c] uppercase tracking-wider font-['Orbitron']">Recommended Emblems</div>
-      {selectedEmblems.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {selectedEmblems.map((trait, idx) => (
-            <button key={idx} onClick={() => removeAt(idx)}
-              className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] border border-[#c89b3c50] bg-[#c89b3c15] text-[#c89b3c] transition-all"
-            >
-              {trait} Emblem <span className="opacity-60">✕</span>
-            </button>
-          ))}
-        </div>
-      )}
-      <div className="relative">
-        <Input value={search} onChange={setSearch} placeholder="Search trait emblems…" className="w-full" onKeyDown={handleKeyDown} />
-        {results.length > 0 && (
-          <div ref={dropdownRef} className="absolute z-10 top-full left-0 right-0 mt-1 bg-[#13162a] border border-[#2d3154] rounded-lg overflow-hidden shadow-xl">
-            {results.map((trait, i) => (
-              <button key={trait} onClick={() => add(trait)}
-                className="w-full text-left px-3 py-1.5 text-[11px] flex items-center gap-2 transition-colors"
-                style={{ backgroundColor: i === highlightIdx ? '#1e2240' : 'transparent', color: '#94a3b8' }}
-              >
-                {trait} Emblem
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
+const EMBLEM_TRAITS = TRAITS
 
 const ADMIN_CONDITION_SECTIONS: ConditionCategory[] = [
   'god_boon',
@@ -444,6 +366,7 @@ function MetaCompsTab() {
       recommendedAugments: [],
       augmentTiers: emptyTierBuckets(),
       artifactTiers: emptyTierBuckets(),
+      emblemTiers: emptyTierBuckets(),
       recommendedEmblems: [],
     }
     await apiFetch('/comps', { method: 'POST', body: JSON.stringify(blank) })
@@ -608,9 +531,18 @@ function MetaCompsTab() {
               onChange={next => updateDraft(activeDraft.id, { artifactTiers: next })}
             />
 
-            <EmblemPicker
-              selectedEmblems={activeDraft.recommendedEmblems ?? []}
-              onChange={names => updateDraft(activeDraft.id, { recommendedEmblems: names })}
+            <TieredRecommendationsEditor
+              title="Emblems — drag tiers"
+              mode="emblem"
+              resetKey={activeDraft.id}
+              emblemOptions={EMBLEM_TRAITS}
+              tiers={activeDraft.emblemTiers ?? emptyTierBuckets()}
+              onChange={next =>
+                updateDraft(activeDraft.id, {
+                  emblemTiers: next,
+                  recommendedEmblems: flattenTierBuckets(next),
+                })
+              }
             />
 
             <TeamBuilder

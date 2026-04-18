@@ -5,19 +5,18 @@ import {
   ARTIFACT_TIER_MATCH_POINTS,
   EARLY_GAME_MAX_BONUS,
   EARLY_GAME_STAGE_MULTIPLIER,
-  EMBLEM_POINTS_PER_MATCH,
   FULL_ITEM_SLOT_PROGRESS,
   CONDITION_MATCH_BONUS,
   ITEM_CORE_SLOT_WEIGHTS,
   ITEM_FLEX_WEIGHT,
   ITEM_ROLE_SLOT_MULTIPLIERS,
-  META_LETTER_TIER_FLAT_BONUS,
   SCORING_WEIGHTS,
   SUBSCORE_SCALE,
   UNIT_MATCH_ROLE_WEIGHTS,
 } from '../config/scoring'
 import {
   normalizeAugmentTiers,
+  normalizeEmblemTiers,
   normalizeArtifactTiers,
   POWER_TIER_ORDER,
 } from './tieredMeta'
@@ -213,7 +212,7 @@ export function scoreComp(
   // --- Tiered augment + artifact + emblem ---
   const augmentTiers = normalizeAugmentTiers(comp)
   const artifactTiers = normalizeArtifactTiers(comp)
-  const recEmblems = comp.recommendedEmblems ?? []
+  const emblemTiers = normalizeEmblemTiers(comp)
 
   function sumTierMatches(
     tiers: typeof augmentTiers,
@@ -240,25 +239,23 @@ export function scoreComp(
     ARTIFACT_TIER_MATCH_POINTS
   )
 
-  const recommendedEmblemKeys = Array.from(
-    new Set((recEmblems ?? []).map(normalizeToken).filter(Boolean))
-  )
-  const matchedEmblemKeys = new Set(
-    selection.augments.flatMap(id => {
-      const normalizedId = normalizeToken(id)
-      return recommendedEmblemKeys.filter(key => normalizedId.includes(key))
+  // Per recommended emblem in `emblemTiers`: augment substring match or Spatula/Pan craft
+  // counts as one match at that emblem’s tier; points = artifact tier table.
+  const matchedAugmentIds = selection.augments.map(id => normalizeToken(id))
+  const emblemComponents = selection.items.filter(n => n === 'Spatula' || n === 'Frying Pan').length
+  let emblemPts = 0
+  let remainingCrafts = emblemComponents
+  for (const tier of [...POWER_TIER_ORDER].reverse()) {
+    const tierKeys = Array.from(new Set((emblemTiers[tier] ?? []).map(normalizeToken).filter(Boolean)))
+    let matchedCount = 0
+    tierKeys.forEach(key => {
+      if (matchedAugmentIds.some(id => id.includes(key))) matchedCount++
     })
-  )
-  const emblemComponents = selection.items.filter(
-    n => n === 'Spatula' || n === 'Frying Pan'
-  ).length
-  // Unified emblem scoring: each recommended emblem can be satisfied once total
-  // (either by already-matched emblem augment or by pan/spat emblem potential).
-  const totalSatisfiedEmblems = Math.min(
-    recommendedEmblemKeys.length,
-    matchedEmblemKeys.size + emblemComponents
-  )
-  const emblemPts = totalSatisfiedEmblems * EMBLEM_POINTS_PER_MATCH
+    const unmet = Math.max(0, tierKeys.length - matchedCount)
+    const crafted = Math.min(remainingCrafts, unmet)
+    remainingCrafts -= crafted
+    emblemPts += (matchedCount + crafted) * (ARTIFACT_TIER_MATCH_POINTS[tier] ?? 0)
+  }
 
   score += augmentPts + artifactPts + emblemPts
 
@@ -268,10 +265,6 @@ export function scoreComp(
     comp.recommendedConditions?.length ? comp.recommendedConditions : legacy.recommendedGodBoons ?? []
   const matches = selection.conditions.filter(id => recConditions.includes(id)).length
   score += matches * CONDITION_MATCH_BONUS
-
-  // --- Meta letter tier ---
-  // Always apply as a small baseline quality adjustment.
-  score += META_LETTER_TIER_FLAT_BONUS[comp.tier]
 
   // --- Build path ---
   const buildPath: string[] = []
