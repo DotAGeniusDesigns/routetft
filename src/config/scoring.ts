@@ -94,20 +94,10 @@ export const ARTIFACT_TIER_MATCH_POINTS: Record<CompPowerTier, number> = {
 }
 
 // ─── Miscellaneous conditions (god boon, constellation, Psionic item, …) ───
+// Only known categories score; ids on the comp list that aren’t in `data/conditions.ts` add 0.
 
-/** Points per user condition that appears on the comp’s recommended list */
-export const CONDITION_MATCH_BONUS = 2
+/** Points when a selected god boon matches the comp’s recommended conditions */
+export const GOD_BOON_CONDITION_MATCH_BONUS = 6
 
-// ─── Meta comp letter tier (S / A / B / C) ───────────────────────────────────
-
-/** Flat bonus by meta letter tier (no extra multiplier). */
-export const META_LETTER_TIER_FLAT_BONUS = {
-  // Around a carry-unit-level bump
-  S: 8,
-  // Around a tank-unit-level bump
-  A: 5.5,
-  // No baseline boost for B tier
-  B: 0,
-  // Small negative nudge for fringe comps
-  C: -3,
-} as const
+/** Points when Stargazer constellation or Psionic item matches the comp’s recommended conditions */
+export const STARGAZER_PSIONIC_CONDITION_MATCH_BONUS = 4

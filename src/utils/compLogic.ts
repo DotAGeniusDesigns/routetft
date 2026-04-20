@@ -6,7 +6,8 @@ import {
   EARLY_GAME_MAX_BONUS,
   EARLY_GAME_STAGE_MULTIPLIER,
   FULL_ITEM_SLOT_PROGRESS,
-  CONDITION_MATCH_BONUS,
+  GOD_BOON_CONDITION_MATCH_BONUS,
+  STARGAZER_PSIONIC_CONDITION_MATCH_BONUS,
   ITEM_CORE_SLOT_WEIGHTS,
   ITEM_FLEX_WEIGHT,
   ITEM_ROLE_SLOT_MULTIPLIERS,
@@ -20,6 +21,7 @@ import {
   normalizeArtifactTiers,
   POWER_TIER_ORDER,
 } from './tieredMeta'
+import { getConditionById } from '../data/conditions'
 
 // composition arrays use component IDs; selection.items uses component names — build a lookup
 const compIdToName: Record<string, string> = Object.fromEntries(
@@ -239,9 +241,12 @@ export function scoreComp(
     ARTIFACT_TIER_MATCH_POINTS
   )
 
-  // Per recommended emblem in `emblemTiers`: augment substring match or Spatula/Pan craft
-  // counts as one match at that emblem’s tier; points = artifact tier table.
+  // Per recommended emblem in `emblemTiers`: held trait emblem, augment substring match,
+  // or Spatula/Pan craft counts as one match at that tier; points = artifact tier table.
   const matchedAugmentIds = selection.augments.map(id => normalizeToken(id))
+  const heldEmblemKeys = new Set(
+    (selection.emblems ?? []).map(e => normalizeToken(e)).filter(Boolean)
+  )
   const emblemComponents = selection.items.filter(n => n === 'Spatula' || n === 'Frying Pan').length
   let emblemPts = 0
   let remainingCrafts = emblemComponents
@@ -249,7 +254,9 @@ export function scoreComp(
     const tierKeys = Array.from(new Set((emblemTiers[tier] ?? []).map(normalizeToken).filter(Boolean)))
     let matchedCount = 0
     tierKeys.forEach(key => {
-      if (matchedAugmentIds.some(id => id.includes(key))) matchedCount++
+      const fromAugment = matchedAugmentIds.some(id => id.includes(key))
+      const fromHeld = heldEmblemKeys.has(key)
+      if (fromAugment || fromHeld) matchedCount++
     })
     const unmet = Math.max(0, tierKeys.length - matchedCount)
     const crafted = Math.min(remainingCrafts, unmet)
@@ -263,8 +270,21 @@ export function scoreComp(
   const legacy = comp as MetaComp & { recommendedGodBoons?: string[] }
   const recConditions =
     comp.recommendedConditions?.length ? comp.recommendedConditions : legacy.recommendedGodBoons ?? []
-  const matches = selection.conditions.filter(id => recConditions.includes(id)).length
-  score += matches * CONDITION_MATCH_BONUS
+  const recConditionSet = new Set(recConditions.map(id => id.trim()))
+  for (const rawId of selection.conditions) {
+    const id = rawId.trim()
+    if (!recConditionSet.has(id)) continue
+    const cond = getConditionById(id)
+    if (!cond) continue
+    if (cond.category === 'god_boon') score += GOD_BOON_CONDITION_MATCH_BONUS
+    else if (
+      cond.category === 'stargazer_constellation' ||
+      cond.category === 'psionic_item'
+    ) {
+      score += STARGAZER_PSIONIC_CONDITION_MATCH_BONUS
+    }
+    // Unknown categories: 0 (only listed criteria with known types score)
+  }
 
   // --- Build path ---
   const buildPath: string[] = []

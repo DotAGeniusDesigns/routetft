@@ -15,43 +15,53 @@ A Teamfight Tactics **Set 17 "Space Gods"** comp finder that recommends optimal 
 ## File Structure
 ```
 src/
-├── App.tsx                        # Root — holds UserSelection state, 3-column layout
+├── App.tsx                        # Root — holds UserSelection state, 4-column layout
 ├── index.tsx                      # Entry point
 ├── index.css                      # Global styles + Tailwind + Google Fonts import
 ├── types/
 │   └── tft.ts                     # All TypeScript interfaces
+├── config/
+│   └── scoring.ts                 # All numeric scoring constants (weights, bonuses, multipliers)
 ├── data/
 │   ├── set17Champions.ts          # 63 Set 17 purchasable champions
 │   ├── championImages.ts          # CHAMPION_IMAGES: Record<string, string> — CDragon PBE portrait URLs
 │   ├── tftItems.ts                # 10 component items + 32 combined items with CDN image URLs
+│   ├── artifactItems.ts           # Artifact item pool with image URLs
 │   ├── augments.ts                # Set 17 augments (Silver/Gold/Prismatic per trait)
 │   ├── augmentImages.ts           # Empty stub — image URLs now live in augments.ts (imageUrl field)
-│   └── metaComps.ts               # 8 meta comps (S/A/B tier) for Set 17
+│   ├── emblemTraits.ts            # EMBLEM_TRAIT_NAMES — trait names valid for Spatula/Pan crafts
+│   ├── conditions.ts              # Set 17 run conditions: god boons, Stargazer constellations, Psionic items
+│   └── metaComps.ts               # Meta comps (S/A/B/C tier) for Set 17
 ├── contexts/
-│   └── TFTDataContext.tsx         # Provides champions, comps, componentItems, augments
+│   └── TFTDataContext.tsx         # Provides champions, comps, componentItems, combinedItems, augments
 ├── components/
 │   ├── UnitPanel.tsx              # Champion selector — portrait images, cost border/glow, filter by cost + trait
+│   ├── ItemPanel.tsx              # Component + combined item selector — CDN icons, multi-select with counts
 │   ├── AugmentPanel.tsx           # Augment selector — compact search-only bar + selected chips
-│   ├── ItemPanel.tsx              # Component item selector — CDN icons, multi-select with counts
+│   ├── ArtifactPanel.tsx          # Artifact item selector
+│   ├── EmblemPanel.tsx            # Trait emblem selector — search + selected chips
+│   ├── ConditionsPanel.tsx        # God boon / Stargazer constellation / Psionic item selector
 │   ├── CompRecommendations.tsx    # Live ranked comp recommendations — champion portraits + item icons
 │   ├── AdminPanel.tsx             # Admin UI — Augments tab + Meta Comps tab (requires admin server)
 │   └── admin/
-│       └── TeamBuilder.tsx        # Visual team builder for meta comps — champion pool with images, roles, trait calc
+│       ├── TeamBuilder.tsx        # Visual team builder for meta comps — champion pool with images, roles, trait calc
+│       └── TieredRecommendationsEditor.tsx  # Drag-tier editor for augments/artifacts/emblems per comp
 └── utils/
-    └── compLogic.ts               # Scoring algorithm + recommendation engine
+    ├── compLogic.ts               # Scoring algorithm + recommendation engine
+    └── tieredMeta.ts              # Helpers for TieredIdBuckets (normalize, flatten, dedupe, migrate)
 admin-server.js                    # Express REST API for editing augments.ts and metaComps.ts
 scrape-augments.js                 # One-off Playwright scraper (re-run each patch for augments)
 ```
 
 ## Layout
-3-column flexbox layout with `overflow-x-auto` — scrolls horizontally on small windows:
+4-column flexbox layout with `overflow-x-auto` — scrolls horizontally on small windows:
 ```
-[ Units (240px) | Items + Augments (260px) | Recommendations (flex, min 280px) ]
+[ Units (240px) | Items (300px) | Augments+Artifacts+Emblems+Conditions (260px) | Recommendations (flex, min 280px) ]
 ```
-Items and Augments share one column — ItemPanel takes flex-1, AugmentPanel is a compact search bar pinned to the bottom.
+Third column stacks AugmentPanel / ArtifactPanel / EmblemPanel / ConditionsPanel with `divide-y`.
 Header bar: app name, stage selector (1–5), clear all button.
 
-Admin panel accessed via `?admin=true` URL param.
+Admin panel accessed via `?admin=<REACT_APP_ADMIN_KEY>` URL param.
 
 ## Design System
 Dark gaming aesthetic. All colors in Tailwind via arbitrary values or CSS classes.
@@ -67,43 +77,52 @@ Dark gaming aesthetic. All colors in Tailwind via arbitrary values or CSS classe
 
 Cost colors: 1=grey `#aaa`, 2=green `#5db85a`, 3=blue `#5b9bd5`, 4=purple `#b070e8`, 5=gold `#ffb938`
 Tier colors: Prismatic=purple `#b070e8`, Gold=`#ffb938`, Silver=`#94a3b8`
+Power tier colors: base=`#64748b`, good=`#5db85a`, great=`#5b9bd5`, op=`#ffb938`
 
 Fonts: `Orbitron` (headings/logo via `font-['Orbitron']`), `Inter` (body) — loaded from Google Fonts in `index.css`.
 
-Custom CSS classes defined in `index.css` `@layer components`: `.panel`, `.panel-header`, `.chip`, `.cost-1` through `.cost-5`, `.tier-s/a/b`, `.btn-primary`, `.btn-ghost`, `.unit-card`, `.item-chip`.
+Custom CSS classes defined in `index.css` `@layer components`: `.panel`, `.panel-header`, `.chip`, `.cost-1` through `.cost-5`, `.tier-s/a/b/c`, `.btn-primary`, `.btn-ghost`, `.unit-card`, `.item-chip`.
 
 ## Key Types (`src/types/tft.ts`)
 - `Champion` — id, name, cost (1–5), traits[]
-- `TFTItem` — id, name, isComponent, composition (component IDs), imageUrl? (CDN URL)
-- `TFTAugment` — id, name, tier (Prismatic/Gold/Silver), desc, traits[], imageUrl? (Mobalytics CDN)
-- `MetaComp` — id, name, tier, carries[], tank, coreUnits[], flexUnits[], carryBuilds[], keyComponents[], earlyGame[], mainTrait, playstyle, description
-- `UserSelection` — items[] (component names), units[] (champion names), augments[] (augment IDs), stage
-- `CompRecommendation` — comp, score, matchedUnits[], matchedComponents[], buildPath[], missingCore[]
+- `TFTItem` — id, name, isComponent, composition (component IDs), imageUrl?
+- `TFTAugment` — id, name, tier (Prismatic/Gold/Silver), desc, traits[], imageUrl?
+- `UnitItemBuild` — champion, coreItems[], flexItems[] (replaces legacy `CarryBuild`)
+- `CarryBuild` — champion, items[], components[] (legacy, kept for backwards compat)
+- `CompPowerTier` — `'base' | 'good' | 'great' | 'op'`
+- `TieredIdBuckets` — `Record<CompPowerTier, string[]>` — per-tier augment/artifact/emblem lists
+- `MetaComp` — id, name, tier (S/A/B/C), carries[], tank, coreUnits[], flexUnits[], unitBuilds?, carryBuilds?, keyComponents[], earlyGame[], playstyle, description, augmentTiers?, artifactTiers?, emblemTiers?, recommendedEmblems?, recommendedConditions?
+- `UserSelection` — items[] (component names), combinedItems[] (built items), units[], augments[], artifacts[], emblems[], conditions[], stage
+- `CompRecommendation` — comp, score, matchedUnits[], matchedEarlyUnits[], matchedComponents[], buildPath[], missingCore[]
 
-## Scoring Logic (`src/utils/compLogic.ts`)
-Weights: units 40%, items 45% (built 60% + component 40%), tier bonus 15%.
-Stage modifier: reroll comps +5 pts at stage ≤3, standard comps +5 pts at stage ≥4.
-Augment scoring not yet implemented (future: per-comp preferred augment lists).
+## Scoring Logic (`src/utils/compLogic.ts` + `src/config/scoring.ts`)
+All numeric constants live in `scoring.ts` — never hardcode numbers in `compLogic.ts`.
+
+**Pillars** (each normalized 0–100 before weight):
+- **Unit score** × `SCORING_WEIGHTS.unit` (0.3) — weighted by role (carry > tank > core > flex)
+- **Item score** × `SCORING_WEIGHTS.item` (0.5) — greedy slot allocation across all item slots; built items score `FULL_ITEM_SLOT_PROGRESS` (2.2), components score 0.5 per part
+
+**Flat additions** (not normalized, added directly to score):
+- **Early game bonus** — `earlyRatio × EARLY_GAME_MAX_BONUS × stageMultiplier` (diminishes at later stages)
+- **Augment tier pts** — match against `augmentTiers` buckets; op=30, great=16, good=10, base=4
+- **Artifact tier pts** — same buckets; op=24, great=16, good=10, base=4
+- **Emblem pts** — matched via held emblems, augment substring, or Spatula/Pan crafts; uses artifact tier table
+- **Condition bonus** — god boon match = +6, Stargazer/Psionic match = +4
+
+**Note:** Meta letter tier (S/A/B/C) intentionally does **not** affect score — comps rank purely by board match.
+
+**Item slot weighting:** Core slots weighted [3.2, 2.4, 1.4]; flex = 0.9. Carry core = 1.0×, carry flex = 0.65×, tank core = 0.42×, tank flex = 0.22×, other core = 0.35×, other flex = 0.2×.
+
+**Display vs score:** `componentProgress()` in `CompRecommendations.tsx` is independent (non-greedy) for display only. `allocateCompItemSlots()` in `compLogic.ts` is greedy (reserves shared components), so displayed item progress can be optimistic vs the actual score.
 
 ## Meta Comps (`src/data/metaComps.ts`)
-8 comps for Set 17 "Space Gods" — update each patch via Admin panel (`?admin=true`):
-
-**S tier:**
-1. **Dark Star Jhin** — Jhin/Kai'Sa carries, Cho'Gath tank, fast9
-2. **Space Groove Blitzcrank** — Samira/Blitzcrank carries, Ornn tank, standard
-
-**A tier:**
-3. **Meeple Bard** — Bard/Corki carries, Rammus tank, fast9
-4. **Stargazer Xayah** — Xayah/Lulu carries, Nunu & Willump tank, standard
-5. **Anima Squad Fiora** — Fiora/Jinx carries, Illaoi tank, 2cost-reroll
-6. **Mecha Aurelion Sol** — Aurelion Sol/The Mighty Mech carries, Urgot tank, standard
-7. **Psionic Sona** — Sona/Master Yi carries, Gragas tank, fast9
-
-**B tier:**
-8. **N.O.V.A. Kindred** — Kindred/Akali carries, Maokai tank, standard
+Update each patch via Admin panel (`?admin=<key>`). Per-comp fields set in admin:
+- `unitBuilds` — per-champion core + flex item lists (preferred over legacy `carryBuilds`)
+- `augmentTiers` / `artifactTiers` / `emblemTiers` — drag-tiered power buckets (base→op)
+- `recommendedConditions` — god boon / constellation / Psionic item IDs from `data/conditions.ts`
 
 ## Champion Notes (`src/data/set17Champions.ts`)
-- **63 purchasable Set 17 champions** — the file is named `set17Champions.ts` but contains Set 17 data
+- **63 purchasable Set 17 champions**
 - Names must match `championImages.ts` keys exactly for images to load
 - Special names requiring exact strings: `"Cho'Gath"`, `"Rek'Sai"`, `"Bel'Veth"`, `"Kai'Sa"`, `"Nunu & Willump"`, `"The Mighty Mech"`
 - `"The Mighty Mech"` maps to `tft17_galio` in championImages.ts
@@ -148,6 +167,8 @@ All recipes verified against Set 17 PBE data. **Many recipes changed from previo
 
 **New Set 17 items:** Hextech Gunblade (BF+NLR), Giant Slayer (BF+Recurve), Evenshroud (Negatron+Giants Belt), Nashor's Tooth (Recurve+Giants Belt), Striker's Flail (Giants Belt+Sparring)
 
+**Spatula / Frying Pan** are excluded from regular item-slot component allocation — they route through emblem scoring only.
+
 ## Admin Backend (`admin-server.js`)
 Express server on port 3001. Start with `npm run admin` (separate terminal from `npm start`).
 - Parses `augments.ts` via `JSON.parse(raw.slice(raw.indexOf('= [') + 2, ...))`
@@ -170,8 +191,10 @@ node scrape-augments.js  # Re-scrape augments (run when Set 17 goes live)
 - **Exception**: `CHAMPION_IMAGES` is imported directly in `UnitPanel.tsx`, `admin/TeamBuilder.tsx`, and `CompRecommendations.tsx` (display-only, not game logic)
 - **Exception**: `AUGMENT_IMAGES` import in `AugmentPanel.tsx` is kept for compat but the record is empty — use `aug.imageUrl` instead
 - **Exception**: `COMPONENT_ITEMS` + `COMBINED_ITEMS` are imported directly in `CompRecommendations.tsx` for the item icon lookup (display-only)
+- **Exception**: `ARTIFACT_ITEMS` imported directly in `CompRecommendations.tsx` and `ArtifactPanel.tsx` (display-only)
 - All new components go in `src/components/`
 - All new types go in `src/types/tft.ts`
+- All scoring numbers go in `src/config/scoring.ts` — never hardcode in `compLogic.ts`
 - Tailwind only — no inline styles, no CSS modules (exception: style prop for dynamic colors)
 - Use arbitrary Tailwind values (`bg-[#0d0f17]`) not custom color tokens
 - Item remove uses `__remove__` prefix hack in `toggleItem` — known tech debt

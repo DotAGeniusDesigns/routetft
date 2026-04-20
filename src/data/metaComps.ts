@@ -4,7 +4,7 @@ export const META_COMPS: MetaComp[] = [
   {
     "id": "comp-1776233002536",
     "name": "NOVA",
-    "tier": "A",
+    "tier": "B",
     "carries": [
       "Kindred",
       "Master Yi"
@@ -66,39 +66,42 @@ export const META_COMPS: MetaComp[] = [
       }
     ],
     "recommendedAugments": [
+      "tft_augment_aurafarming",
       "tft11_augment_slammin",
       "tft11_augment_slammin_plus",
+      "tft9_augment_commander_rollingfordays",
       "tft_augment_grouphug1",
       "tft_augment_grouphug2",
       "tft_augment_sizematters",
-      "tft9_augment_commander_rollingfordays",
       "tft_augment_expectedunexpectedness",
       "tft11_augment_reinfourcement",
+      "tft_augment_epicrolldown",
       "tft_augment_speedydoublekill",
       "tft7_augment_urfsgrabbag2",
-      "tft16_augment_ultrarapidfire",
-      "tft_augment_epicrolldown"
+      "tft16_augment_ultrarapidfire"
     ],
     "recommendedEmblems": [
       "N.O.V.A."
     ],
     "augmentTiers": {
-      "base": [],
-      "good": [
+      "base": [
+        "tft_augment_aurafarming",
         "tft11_augment_slammin",
         "tft11_augment_slammin_plus",
+        "tft9_augment_commander_rollingfordays"
+      ],
+      "good": [
         "tft_augment_grouphug1",
         "tft_augment_grouphug2",
         "tft_augment_sizematters",
-        "tft9_augment_commander_rollingfordays",
         "tft_augment_expectedunexpectedness",
-        "tft11_augment_reinfourcement"
+        "tft11_augment_reinfourcement",
+        "tft_augment_epicrolldown",
+        "tft_augment_speedydoublekill"
       ],
       "great": [
-        "tft_augment_speedydoublekill",
         "tft7_augment_urfsgrabbag2",
-        "tft16_augment_ultrarapidfire",
-        "tft_augment_epicrolldown"
+        "tft16_augment_ultrarapidfire"
       ],
       "op": []
     },
@@ -122,7 +125,7 @@ export const META_COMPS: MetaComp[] = [
   {
     "id": "comp-1776239119036",
     "name": "Vex Fast 9",
-    "tier": "B",
+    "tier": "A",
     "carries": [
       "Vex",
       "Blitzcrank"
@@ -199,12 +202,12 @@ export const META_COMPS: MetaComp[] = [
     "playstyle": "fast9",
     "description": "",
     "recommendedAugments": [
+      "tft11_augment_slammin",
+      "tft11_augment_slammin_plus",
       "tft_augment_aurafarming",
       "tft_augment_duoqueue",
       "tft_augment_gildedsteel",
       "tft_augment_moneymonsoon",
-      "tft11_augment_slammin",
-      "tft11_augment_slammin_plus",
       "tft7_augment_lategamespecialist",
       "tft_augment_lategamescaling",
       "tft_augment_upwardmobility",
@@ -214,14 +217,15 @@ export const META_COMPS: MetaComp[] = [
     ],
     "recommendedEmblems": [],
     "augmentTiers": {
-      "base": [],
+      "base": [
+        "tft11_augment_slammin",
+        "tft11_augment_slammin_plus"
+      ],
       "good": [
         "tft_augment_aurafarming",
         "tft_augment_duoqueue",
         "tft_augment_gildedsteel",
         "tft_augment_moneymonsoon",
-        "tft11_augment_slammin",
-        "tft11_augment_slammin_plus",
         "tft7_augment_lategamespecialist",
         "tft_augment_lategamescaling"
       ],
@@ -382,7 +386,7 @@ export const META_COMPS: MetaComp[] = [
   {
     "id": "comp-1776246726367",
     "name": "LeBlanc Karma",
-    "tier": "A",
+    "tier": "B",
     "carries": [
       "LeBlanc",
       "Karma"
@@ -755,7 +759,7 @@ export const META_COMPS: MetaComp[] = [
   {
     "id": "comp-1776247980040",
     "name": "In the Groove",
-    "tier": "B",
+    "tier": "A",
     "carries": [
       "Blitzcrank",
       "Nami",
@@ -1162,7 +1166,8 @@ export const META_COMPS: MetaComp[] = [
     "artifactTiers": {
       "base": [],
       "good": [
-        "Death's Defiance"
+        "Death's Defiance",
+        "Gold Collector"
       ],
       "great": [],
       "op": []
@@ -1673,12 +1678,18 @@ export const META_COMPS: MetaComp[] = [
       "great": [],
       "op": []
     },
-    "link": "https://tftflow.com/composition/set17/twisted-fate-reroll-2"
+    "link": "https://tftflow.com/composition/set17/twisted-fate-reroll-2",
+    "emblemTiers": {
+      "base": [],
+      "good": [],
+      "great": [],
+      "op": []
+    }
   },
   {
     "id": "comp-1776406889062",
     "name": "Anima Viktor",
-    "tier": "B",
+    "tier": "A",
     "carries": [
       "Aurora",
       "Viktor"
@@ -2101,10 +2112,10 @@ export const META_COMPS: MetaComp[] = [
       "tft_augment_legionofthrees",
       "tft_augment_patienceisavirtue",
       "tft_augment_tragicalblade",
-      "tft_augment_twotanky",
       "tft_augment_swordoverflow",
       "tft6_augment_tradesector",
-      "tft6_augment_gachaaddict"
+      "tft6_augment_gachaaddict",
+      "tft_augment_twotanky"
     ],
     "augmentTiers": {
       "base": [
@@ -2117,12 +2128,12 @@ export const META_COMPS: MetaComp[] = [
       "good": [
         "tft_augment_patienceisavirtue",
         "tft_augment_tragicalblade",
-        "tft_augment_twotanky",
         "tft_augment_swordoverflow",
         "tft6_augment_tradesector"
       ],
       "great": [
-        "tft6_augment_gachaaddict"
+        "tft6_augment_gachaaddict",
+        "tft_augment_twotanky"
       ],
       "op": []
     },
@@ -2140,5 +2151,248 @@ export const META_COMPS: MetaComp[] = [
     },
     "recommendedEmblems": [],
     "link": "https://tftflow.com/composition/set17/samira-reroll"
+  },
+  {
+    "id": "comp-1776695008851",
+    "name": "Dark Star",
+    "tier": "A",
+    "carries": [
+      "Karma",
+      "Jhin"
+    ],
+    "tank": "Nunu & Willump",
+    "coreUnits": [
+      "Lissandra",
+      "Cho'Gath",
+      "Karma",
+      "Jhin",
+      "Kai'Sa",
+      "Nunu & Willump"
+    ],
+    "flexUnits": [
+      "Tahm Kench",
+      "Riven"
+    ],
+    "unitBuilds": [
+      {
+        "champion": "Karma",
+        "coreItems": [
+          "Spear of Shojin",
+          "Jeweled Gauntlet",
+          "Striker's Flail"
+        ],
+        "flexItems": [
+          "Blue Buff"
+        ]
+      },
+      {
+        "champion": "Jhin",
+        "coreItems": [
+          "Infinity Edge",
+          "Giant Slayer",
+          "Deathblade"
+        ],
+        "flexItems": [
+          "Hextech Gunblade"
+        ]
+      },
+      {
+        "champion": "Nunu & Willump",
+        "coreItems": [
+          "Protector's Vow",
+          "Protector's Vow",
+          "Protector's Vow"
+        ],
+        "flexItems": [
+          "Spirit Visage",
+          "Sunfire Cape",
+          "Warmog's Armor",
+          "Bramble Vest",
+          "Dragon's Claw"
+        ]
+      }
+    ],
+    "carryBuilds": [],
+    "keyComponents": [],
+    "earlyGame": [
+      "Bel'Veth",
+      "Rek'Sai",
+      "Briar",
+      "Pantheon",
+      "Ezreal"
+    ],
+    "playstyle": "standard",
+    "description": "",
+    "recommendedConditions": [],
+    "recommendedAugments": [
+      "tft_augment_epicrolldown",
+      "tft_augment_spreadingroots",
+      "tft_augment_spreadingrootsplus",
+      "tft_augment_traittree",
+      "tft_augment_branchingout",
+      "tft_augment_branchingoutplus",
+      "tft_augment_traittreeplus"
+    ],
+    "augmentTiers": {
+      "base": [],
+      "good": [
+        "tft_augment_epicrolldown",
+        "tft_augment_spreadingroots",
+        "tft_augment_spreadingrootsplus",
+        "tft_augment_traittree",
+        "tft_augment_branchingout",
+        "tft_augment_branchingoutplus"
+      ],
+      "great": [
+        "tft_augment_traittreeplus"
+      ],
+      "op": []
+    },
+    "artifactTiers": {
+      "base": [],
+      "good": [],
+      "great": [],
+      "op": []
+    },
+    "emblemTiers": {
+      "base": [
+        "Brawler",
+        "Shepherd",
+        "Sniper",
+        "Timebreaker",
+        "Vanguard",
+        "Voyager"
+      ],
+      "good": [
+        "Rogue"
+      ],
+      "great": [
+        "Dark Star"
+      ],
+      "op": []
+    },
+    "recommendedEmblems": [
+      "Brawler",
+      "Shepherd",
+      "Sniper",
+      "Timebreaker",
+      "Vanguard",
+      "Voyager",
+      "Rogue",
+      "Dark Star"
+    ],
+    "link": "https://tftflow.com/composition/set17/dark-star"
+  },
+  {
+    "id": "comp-1776695633634",
+    "name": "Sword Fighters",
+    "tier": "B",
+    "carries": [
+      "Master Yi",
+      "Riven"
+    ],
+    "tank": "Tahm Kench",
+    "coreUnits": [
+      "Aatrox",
+      "Akali",
+      "Gragas",
+      "Rhaast",
+      "Gwen",
+      "Master Yi",
+      "Riven",
+      "Tahm Kench",
+      "Shen"
+    ],
+    "flexUnits": [],
+    "unitBuilds": [
+      {
+        "champion": "Master Yi",
+        "coreItems": [
+          "Malware Matrix",
+          "Edge of Night",
+          "Giant Slayer"
+        ],
+        "flexItems": [
+          "Target-Lock Optics",
+          "Sterak's Gage",
+          "Hand of Justice",
+          "Quicksilver"
+        ]
+      },
+      {
+        "champion": "Riven",
+        "coreItems": [
+          "Edge of Night",
+          "Sterak's Gage",
+          "Bloodthirster"
+        ],
+        "flexItems": []
+      },
+      {
+        "champion": "Tahm Kench",
+        "coreItems": [
+          "Warmog's Armor",
+          "Sunfire Cape",
+          "Spirit Visage"
+        ],
+        "flexItems": [
+          "Bramble Vest",
+          "Dragon's Claw"
+        ]
+      }
+    ],
+    "carryBuilds": [],
+    "keyComponents": [],
+    "earlyGame": [
+      "Pyke",
+      "Caitlyn"
+    ],
+    "playstyle": "standard",
+    "description": "",
+    "recommendedConditions": [
+      "psionic_malware_matrix",
+      "psionic_target_lock_optics"
+    ],
+    "recommendedAugments": [
+      "tft_augment_bronzeforlifei",
+      "tft_augment_bronzeforlife2",
+      "tft10_augment_littlebuddies",
+      "tft_augment_epicrolldown"
+    ],
+    "augmentTiers": {
+      "base": [
+        "tft_augment_bronzeforlifei"
+      ],
+      "good": [
+        "tft_augment_bronzeforlife2",
+        "tft10_augment_littlebuddies",
+        "tft_augment_epicrolldown"
+      ],
+      "great": [],
+      "op": []
+    },
+    "artifactTiers": {
+      "base": [],
+      "good": [
+        "Death's Defiance"
+      ],
+      "great": [],
+      "op": []
+    },
+    "emblemTiers": {
+      "base": [
+        "N.O.V.A."
+      ],
+      "good": [],
+      "great": [
+        "Rogue"
+      ],
+      "op": []
+    },
+    "recommendedEmblems": [
+      "N.O.V.A.",
+      "Rogue"
+    ],
+    "link": "https://tftflow.com/composition/set17/riven-yi"
   }
 ]

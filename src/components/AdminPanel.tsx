@@ -7,6 +7,7 @@ import {
   conditionsInCategory,
   Condition,
 } from '../data/conditions'
+import { EMBLEM_TRAIT_NAMES } from '../data/emblemTraits'
 import TeamBuilder from './admin/TeamBuilder'
 import TieredRecommendationsEditor from './admin/TieredRecommendationsEditor'
 import { migrateMetaCompDraft, flattenTierBuckets, emptyTierBuckets } from '../utils/tieredMeta'
@@ -227,17 +228,6 @@ function AugmentsTab() {
     </div>
   )
 }
-
-// ─── Emblem options ───────────────────────────────────────────────────────────
-
-const TRAITS = [
-  'Anima', 'N.O.V.A.', 'Dark Star', 'Space Groove', 'Meeple', 'Stargazer',
-  'Timebreaker', 'Mecha', 'Psionic', 'Arbiter', 'Primordian',
-  'Rogue', 'Challenger', 'Brawler', 'Vanguard', 'Sniper', 'Bastion',
-  'Marauder', 'Channeler', 'Voyager', 'Shepherd', 'Replicator', 'Fateweaver', 'Redeemer',
-]
-
-const EMBLEM_TRAITS = TRAITS
 
 const ADMIN_CONDITION_SECTIONS: ConditionCategory[] = [
   'god_boon',
@@ -535,7 +525,7 @@ function MetaCompsTab() {
               title="Emblems — drag tiers"
               mode="emblem"
               resetKey={activeDraft.id}
-              emblemOptions={EMBLEM_TRAITS}
+              emblemOptions={[...EMBLEM_TRAIT_NAMES]}
               tiers={activeDraft.emblemTiers ?? emptyTierBuckets()}
               onChange={next =>
                 updateDraft(activeDraft.id, {

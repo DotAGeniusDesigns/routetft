@@ -7,6 +7,7 @@ import UnitPanel from './components/UnitPanel'
 import ItemPanel from './components/ItemPanel'
 import AugmentPanel from './components/AugmentPanel'
 import ArtifactPanel from './components/ArtifactPanel'
+import EmblemPanel from './components/EmblemPanel'
 import ConditionsPanel from './components/ConditionsPanel'
 import CompRecommendations from './components/CompRecommendations'
 
@@ -19,6 +20,7 @@ function AppContent() {
     units: [],
     augments: [],
     artifacts: [],
+    emblems: [],
     conditions: [],
     stage: 2,
   })
@@ -83,6 +85,15 @@ function AppContent() {
     }))
   }
 
+  const toggleEmblem = (traitName: string) => {
+    setSelection(prev => ({
+      ...prev,
+      emblems: prev.emblems.includes(traitName)
+        ? prev.emblems.filter(e => e !== traitName)
+        : [...prev.emblems, traitName],
+    }))
+  }
+
   const toggleCondition = (id: string) =>
     setSelection(prev => ({
       ...prev,
@@ -100,6 +111,7 @@ function AppContent() {
       units: [],
       augments: [],
       artifacts: [],
+      emblems: [],
       conditions: [],
       stage: selection.stage,
     })
@@ -110,6 +122,7 @@ function AppContent() {
     selection.units.length +
     selection.augments.length +
     selection.artifacts.length +
+    selection.emblems.length +
     selection.conditions.length
 
   return (
@@ -185,6 +198,7 @@ function AppContent() {
             selectedArtifacts={selection.artifacts}
             onToggle={toggleArtifact}
           />
+          <EmblemPanel selectedEmblems={selection.emblems} onToggle={toggleEmblem} />
           <ConditionsPanel
             selected={selection.conditions}
             onToggle={toggleCondition}

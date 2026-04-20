@@ -73,6 +73,8 @@ export interface UserSelection {
   units: string[]       // champion names the user holds
   augments: string[]    // augment IDs the user has
   artifacts: string[]   // artifact item names the user has
+  /** Trait emblem names the user has (e.g. "Dark Star") — same strings as meta `emblemTiers` */
+  emblems: string[]
   /** Active miscellaneous conditions (god boon, constellation, Psionic item, …) */
   conditions: string[]
   stage: number

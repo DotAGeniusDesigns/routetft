@@ -134,7 +134,9 @@ export default function CompRecommendations({ recommendations, selection }: Prop
     selection.items.length > 0 ||
     selection.combinedItems.length > 0 ||
     selection.augments.length > 0 ||
-    selection.artifacts.length > 0
+    selection.artifacts.length > 0 ||
+    selection.emblems.length > 0 ||
+    selection.conditions.length > 0
 
   return (
     <div className="panel flex flex-col h-full">
@@ -533,6 +535,10 @@ export default function CompRecommendations({ recommendations, selection }: Prop
                         return emblemKeys.filter(key => normalizedId.includes(key))
                       })
                     )
+                    ;(selection.emblems ?? []).forEach(name => {
+                      const t = normalizeToken(name)
+                      if (emblemKeys.includes(t)) matchedKeys.add(t)
+                    })
                     const matchedByAugment = new Set(
                       recEmblems.filter(e => matchedKeys.has(normalizeToken(e)))
                     )
